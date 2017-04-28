@@ -1,0 +1,103 @@
+@* spikeRule Template File *@
+<div id="spikeRule" class="tab-pane" align="left">
+	<br/>
+	<h3>說明:</h3>
+	<p>該測值超過前後平均的絕對值範圍</p>
+	<form id="spikeForm" class="form-horizontal">
+        <div class="form-group">
+			<label class="col-lg-1 control-label">啟用</label>
+        	<div class="col-lg-1">        		
+            	<input type="checkbox" name="enabled" class="form-control">
+            </div>
+        </div>
+		<div id='spikeParameter'>
+        <table class="table">
+        	<thead>
+        		<tr>
+        			<th>測項</th>
+        			<th>絕對值</th>
+        		</tr>
+        	</thead>
+        	<tbody>
+        		@for(mt<-MonitorType.mtvList){
+        			<tr>
+        				<th><input type="checkbox" name="monitorType" id='@mt' disabled>@MonitorType.map(mt).desp</th>
+        				<td><input name="absValue" id='@mt' value='10' disabled></td>
+        			</tr>
+        		}
+        	</tbody>
+        </table>
+        </div>
+		
+		<div class="form-group">
+        	<div class="col-lg-offset-2 col-lg-10">
+            	<button class="btn btn-primary" type="submit">確認</button>
+            </div>
+        </div>
+	</form>
+</div>
+<script>
+function updateSpikeForm(){
+	var config = auditConfig.spikeRule;
+	var $enabled = $('#spikeForm :input[name="enabled"]');
+	$enabled.prop('checked', config.enabled);
+	var $inputs = $('#spikeParameter :input');
+	function findSpikeCfg(array, id){
+		for(var i=0;i<array.length;i++){
+			if(array[i].id == id)
+				return array[i]
+		}
+
+		return null;				
+	}
+	
+	for(var i=0;i<$inputs.length;i++){
+		var $input = $inputs.eq(i);
+		$input.prop('disabled', !config.enabled);
+		if($input.prop('type') == 'checkbox'){
+			var id = $input.prop('id');
+			var spike = findSpikeCfg(config.monitorTypes, id);
+			if(spike != null){
+				$input.prop('checked', true);
+				var $abs = $input.parent().next().children();
+				$abs.val(spike.abs.toFixed(2));
+			}else{
+				$input.prop('checked', false);
+				var $abs = $input.parent().next().children();
+				$abs.val(10);
+			}				
+		}
+	}	
+}
+
+$('#spikeForm :input[name="enabled"]').click(function(){
+	var $me=$(this);
+	var $inputs = $('#spikeParameter :input');
+	var disabled = !$me.prop('checked'); 
+	for(var i=0;i<$inputs.length;i++){
+		var $check = $inputs.eq(i);
+		$check.prop("disabled", disabled);
+	}
+});
+$('#spikeForm').submit(function(){
+	var param={};
+	var $enabled = $('#spikeForm :input[name="enabled"]')
+	var $inputs = $('#spikeParameter :input[name="monitorType"]');
+	param.enabled = $enabled.prop("checked");
+	param.monitorTypes=[];
+	for(var i=0;i<$inputs.length;i++){
+		var $check = $inputs.eq(i);
+		if($check.prop("checked")){				
+			var mt={};
+			mt.id = $check.prop('id');
+			var $abs = $check.parent().next().children();				
+			mt.abs = parseFloat($abs.val());
+			param.monitorTypes.push(mt);
+		}
+	}
+	auditConfig.spikeRule = param;
+	postAuditCfg();
+	event.preventDefault();
+});
+
+</script>

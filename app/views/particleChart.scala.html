@@ -1,0 +1,64 @@
+@* particleChart Template File *@
+@(param: Any)
+<div class="col-lg-3">
+	<div class="ibox">
+    <div class="ibox-content">
+    	<div id="particleChart"></div>
+    </div>
+    </div>
+</div>
+<script>
+$(document).ready(function(){
+    $('#particleChart').highcharts({
+        chart: {
+            type: 'funnel',
+            marginRight: 100,
+            height: 250
+        },
+        legend: {
+			enabled : false
+		},
+		navigation:{
+	    	buttonOptions: {
+	        	enabled: false
+	    	}
+	    },
+	    credits :{
+	    	text: "昱山環境技術服務",
+			enabled : true,
+			href : 'http://www.wecc.com.tw/'
+		},
+        title: {
+            text: '警報分析 (示意)',
+            x: -50
+        },
+        plotOptions: {
+            series: {
+                dataLabels: {
+                    enabled: true,
+                    format: '<b>{point.name}</b> ({point.y:,.1f})',
+                    color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black',
+                    softConnector: true
+                },
+                neckWidth: '60%',
+                neckHeight: '50%'
+
+                //-- Other available options
+                // height: pixels or percent
+                // width: pixels or percent
+            }
+        },
+        legend: {
+            enabled: false
+        },
+        series: [{
+            name: '警報',
+            data: [
+                ['資訊',   69],
+                ['警告',  30],
+                ['嚴重', 10]
+            ]
+        }]
+    });
+});
+</script>

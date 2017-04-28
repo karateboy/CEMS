@@ -1,0 +1,105 @@
+@* periodReport Template File *@
+@import com.github.nscala_time.time.Imports._
+@(param:String)(implicit request: RequestHeader)
+
+<div class="row" ng-controller="reportCtrl as ctrl">
+   	<div class="col-lg-12">
+        	<div class="panel panel-primary">
+            	<div class="panel-heading panel-title" >
+            		查詢參數	
+                </div>
+            	<div class="panel-body panel-collapse in" id="reportParam">
+            		<form class="form-horizontal">
+            		    <div class="form-group">
+	            			<label class="col-lg-1 control-label">工業區</label>
+	            			<div class="col-lg-11">
+	            				<div class="btn-group">	            				            				
+	            					<label class="btn btn-outline btn-primary" ng-model="$parent.selectedIndPark" ng-repeat="park in ctrl.indParkList"  
+	            					uib-btn-radio="park">{{park}}</label>	            			
+	            				</div>
+	            			</div>	            			            		
+	                    </div>
+            			<div class="form-group" ng-show="selectedIndPark">
+	            			<label class="col-lg-1 control-label">測站</label>
+	            			<div class="col-lg-11">
+	            				<div class="btn-group">	            				            				
+	            					<label class="btn btn-outline btn-primary" ng-model="$parent.selectedMonitorId" ng-repeat="m in ctrl.monitorList | filter:ctrl.indParkMonitor"  
+	            					uib-btn-radio="m._id">{{m.indParkName+"-"+m.dp_no}}</label>	            			
+	            				</div>
+	            			</div>	            			            		
+	                    </div>
+            			<div class="form-group" ng-show="selectedMonitorId">
+	            			<label class="col-lg-1 control-label">報表種類</label>
+	            			<div class="col-lg-11">
+	            				<div class="btn-group">	            				            				
+	            					<label class="btn btn-outline btn-primary" ng-model="$parent.selectedReportType" ng-repeat="reportType in ctrl.reportTypeList"  
+	            					uib-btn-radio="reportType.id">{{reportType.name}}</label>	            			
+	            				</div>
+	            			</div>	            			            		
+	                    </div>
+            		
+	                    <div class="form-group" ng-show="selectedReportType">
+	            			<label class="col-lg-1 control-label">查詢日期</label>
+	            			<div class="col-lg-4">
+	            				<div class="dropdown" ng-show="selectedReportType =='daily'">
+  									<a class="dropdown-toggle" id="dropdown2" role="button" data-toggle="dropdown" data-target="#" >
+    									<div class="input-group"><input type="text" class="form-control" data-ng-model="ctrl.dateStart" date-time-input="YYYY-MM-DD">
+    									<span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
+    									</div>
+  									</a>
+  									<ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+    									<datetimepicker data-ng-model="ctrl.dateStart" data-datetimepicker-config="{startView:'day', minView:'day' }"/>
+  									</ul>
+								</div>
+								<div class="dropdown" ng-show="selectedReportType =='monthly'">
+  									<a class="dropdown-toggle" id="dropdown2" role="button" data-toggle="dropdown" data-target="#" >
+    									<div class="input-group"><input type="text" class="form-control" data-ng-model="ctrl.dateStart" date-time-input="YYYY-MM">
+    									<span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
+    									</div>
+  									</a>
+  									<ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+    									<datetimepicker data-ng-model="ctrl.dateStart" data-datetimepicker-config="{ startView:'month', minView:'month' }"/>
+  									</ul>
+								</div>									            			
+	            			</div>
+	            		</div>													                    
+						<div class="form-group">
+							<div class="col-lg-1 col-lg-offset-1">
+								<button type="submit" class="btn btn-primary" ng-click="ctrl.query()" ng-show="selectedReportType">查詢</button>
+							</div>							
+						</div>
+            		</form>
+            	</div>
+        	</div>
+        	<!-- Modal -->
+  			<div class="modal fade" id="MinMonthlyDialog" role="dialog">
+    			<div class="modal-dialog modal-lg">
+      				<div class="modal-content">
+        			<div class="modal-header">
+          			<button type="button" class="close" data-dismiss="modal">&times;</button>
+          				<h4 class="modal-title">@PeriodReport.map(PeriodReport.MinMonthlyReport)</h4>
+        			</div>
+        			<div class="modal-body">
+          				<div class="progress">
+  							<div id="progressBar" class="progress-bar progress-bar-striped active" role="progressbar"
+  								aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width:0%">
+    							0%
+  							</div>
+						</div>
+        			</div>
+      				</div>
+    			</div>
+  			</div>
+
+        	
+        	<div class="panel panel-success" ng-show="ctrl.displayResult" id="reportPanel">
+             	<div class="panel-body panel-collapse" id="monitorReport">
+            		<div align="right">
+            			<label class="btn btn-outline" data-toggle="tooltip" data-placement="bottom" title="Excel"><a href="#" id="downloadExcel"><i class="fa fa-file-excel-o fa-2x"></i></a></label>            			
+                	</div>            		
+					<div id="reportDiv" align="center" style="overflow:auto;">
+            		</div>
+            	</div>
+        	</div>
+	</div>
+</div>

@@ -1,0 +1,116 @@
+@* maxMinRule Template File *@
+<div id="minMaxRule" class="tab-pane active" align="left">
+	<br/>
+	<h3>說明:</h3>
+	<p>汙染物濃度超過最大或最小值, 系統自動註記</p>
+	<form id="minMaxForm" class="form-horizontal">	
+		<div class="form-group">
+			<label class="col-lg-1 control-label">啟用</label>
+        	<div class="col-lg-1">        		
+            	<input type="checkbox" name="enabled" class="form-control">
+            </div>
+        </div>
+        <div id='minMaxParameter'>        
+        <table class="table">
+        	<thead>
+        		<tr>
+        			<th>測項</th>
+        			<th>最大值</th>
+        			<th>最小值</th>
+        		</tr>
+        	</thead>
+        	<tbody>
+        		@for(mt<-MonitorType.mtvList){
+        			<tr>
+        				<th><input type="checkbox" name="monitorType" id='@mt' disabled>@MonitorType.map(mt).desp</th>
+        				<td><input name="maxValue" id='@mt' value='@MonitorType.format(mt, MonitorType.map(mt).std_internal)' disabled></td>
+        				<td><input name="minValue" id='@mt' value='0' disabled></td>
+        			</tr>
+        		}
+        	</tbody>
+        </table>
+        </div>
+		<div class="form-group">
+        	<div class="col-lg-offset-2 col-lg-10">
+            	<button class="btn btn-primary" type="submit">確認</button>
+            </div>
+        </div>
+	</form>    
+</div>
+<script>
+
+</script>
+<script>
+function updateMinMaxForm (){
+	var config = auditConfig.minMaxRule;
+	var $enabled = $('#minMaxForm :input[name="enabled"]');
+	$enabled.prop('checked', config.enabled);
+	
+	var $inputs = $('#minMaxParameter :input');
+	function findMinMaxCfg(array, id){
+		for(var i=0;i<array.length;i++){
+			if(array[i].id == id)
+				return array[i]
+		}
+
+		return null;				
+	}
+	
+	for(var i=0;i<$inputs.length;i++){
+		var $input = $inputs.eq(i);
+		$input.prop('disabled', !config.enabled);
+		if($input.prop('type') == 'checkbox'){
+			var id = $input.prop('id');
+			var mt = findMinMaxCfg(config.monitorTypes, id);
+			if(mt != null){
+				$input.prop('checked', true);
+				var $max = $input.parent().next().children();
+				$max.val(mt.max.toFixed(2));
+				var $min = $max.parent().next().children();
+				$min.val(mt.min.toFixed(2));
+			}else{
+				$input.prop('checked', false);
+				var $max = $input.parent().next().children();
+				$max.val(std_internal[id]);
+				var $min = $max.parent().next().children();
+				$min.val(0);
+			}				
+		}
+	}
+}
+
+$('#minMaxForm :input[name="enabled"]').click(function(){
+	var $me=$(this);
+	var $inputs = $('#minMaxParameter :input');
+	var disabled = !$me.prop('checked'); 
+	for(var i=0;i<$inputs.length;i++){
+		var $check = $inputs.eq(i);
+		$check.prop("disabled", disabled);
+	}
+});
+
+$('#minMaxForm').submit(function(){
+	var param={};
+	var $enabled = $('#minMaxForm :input[name="enabled"]')
+	var $inputs = $('#minMaxParameter :input');
+	param.enabled = $enabled.prop("checked");
+	param.monitorTypes=[];
+	for(var i=0;i<$inputs.length;i++){
+		var $check = $inputs.eq(i);
+		if($check.prop("checked")){				
+			var mt={};
+			mt.id = $check.prop('id');
+			var $max = $check.parent().next().children();				
+			mt.max = parseFloat($max.val());
+			var $min = $max.parent().next().children();
+			mt.min = parseFloat($min.val());
+			param.monitorTypes.push(mt);
+		}
+	}
+	auditConfig.minMaxRule = param;
+	postAuditCfg();
+	event.preventDefault();
+});
+
+</script>
+

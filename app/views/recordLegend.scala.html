@@ -1,0 +1,21 @@
+@* recordLegend Template File *@
+@(showAudit:Boolean=true)
+<div class="col-lg-offset-3 col-lg-9">
+<table class="table">
+<tbody>
+<tr>
+	<td class="col-lg-1 normal text-center"><strong>標示說明:</strong></td>
+	<td class="col-lg-1 over_internal_std text-center"><i class="fa fa-exclamation-triangle"></i>超過內控值</td>
+	<td class="col-lg-1 over_law_std text-center"><i class="fa fa-exclamation-triangle"></i>超過法規值</td>
+	<td class="col-lg-1 normal suspend_status text-center">暫停運轉</td>
+	<td class="col-lg-1 normal calibration_status text-center">校正</td>
+	<td class="col-lg-1 normal maintain_status text-center">維修</td>
+	<td class="col-lg-1 normal abnormal_status text-center">無效/超限</td>
+@if(showAudit){
+	<td class="col-lg-1 normal auto_audit_status text-center">自動檢核</td>
+	<td class="col-lg-1 normal manual_audit_status text-center">人工註記</td>
+}
+</tr>
+</tbody>
+</table>
+</div>

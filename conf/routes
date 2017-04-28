@@ -1,0 +1,109 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Home page
+GET      /                                                                    controllers.Application.index
+
+# Map static resources from the /public folder to the /assets URL path
+GET      /assets/*file                                                        controllers.Assets.versioned(path="/public", file: Asset)
+GET      /html/*file                                                          controllers.Assets.at(path="/public/html", file)
+
+GET      /login                                                               controllers.Login.prompt
+GET      /logout                                                              controllers.Login.logout
+POST     /authenticate                                                        controllers.Login.authenticate
+
+GET      /Dashboard                                                           controllers.Application.dashboard
+GET      /JSON/realtime/map                                                   controllers.Realtime.realtimeMap
+
+GET      /UserManagement                                                      controllers.Application.userManagement
+POST     /User                                                                controllers.Application.newUser
+GET      /User                                                                controllers.Application.getAllUsers
+PUT      /User/:id                                                            controllers.Application.updateUser(id)
+DELETE   /User/:id                                                            controllers.Application.deleteUser(id)	
+
+GET      /GroupManagement                                                     controllers.Application.groupManagement
+POST     /Group/:id                                                           controllers.Application.newGroup(id)
+GET      /Group                                                               controllers.Application.getAllGroups
+PUT      /Group/:id                                                           controllers.Application.updateGroup(id)
+DELETE   /Group/:id                                                           controllers.Application.deleteGroup(id)
+
+GET      /HistoryTrend                                                        controllers.Query.historyTrend
+GET      /JSON/HistoryTrend/:monitors/:monitorType/:reportUnit/:start/:end    controllers.Query.historyTrendChart(monitors, monitorType, reportUnit, start:Long, end:Long, outputTypeStr="html")
+GET      /Excel/HistoryTrend/:monitors/:monitorType/:reportUnit/:start/:end   controllers.Query.historyTrendChart(monitors,monitorType, reportUnit, start:Long, end:Long, outputTypeStr="excel")
+
+GET      /History                                                             controllers.Query.history
+GET      /HistoryReport/:monitor/:monitorType/:tabType/:start/:end            controllers.Query.historyReport(monitor, monitorType, tabType, start:Long, end:Long)
+GET      /Alarm                                                               controllers.Query.alarm
+GET      /AlarmReport/:monitors/:monitorTypes/:start/:end                     controllers.Query.alarmReport(monitors, monitorTypes, start, end)
+
+GET      /WindRose                                                            controllers.Query.windRose
+GET      /JSON/WindRose/:monitors/:monitorType/:nWay/:start/:end              controllers.Query.windRoseReport(monitors, monitorType, nWay:Int, start:Long, end:Long, outputTypeStr="html")
+GET      /Excel/WindRose/:monitors/:monitorType/:nWay/:start/:end             controllers.Query.windRoseReport(monitors, monitorType, nWay:Int, start:Long, end:Long, outputTypeStr="excel")
+
+
+GET      /MonitorTypeConfig                                                   controllers.Application.monitorTypeConfig
+POST     /SaveMonitorTypeConfig                                               controllers.Application.saveMonitorTypeConfig
+GET      /MonitorConfig                                                       controllers.Application.monitorConfig
+POST     /SaveMonitorConfig                                                   controllers.Application.saveMonitorConfig
+
+GET      /ManualAudit                                                         controllers.Query.manualAudit()
+GET      /ManualAuditHistory                                                  controllers.Query.manualAuditHistory()
+GET      /ManualAuditHistory/:start/:end                                      controllers.Query.manualAuditHistoryReport(start:Long, end:Long)
+
+#Data Management
+GET      /DataManagement                                                      controllers.Application.dataManagement
+GET      /Recalculate/:start/:end                                             controllers.Application.recalculateHour(start, end)
+
+#Realtime
+GET      /MonitorTypeStatusList                                               controllers.Realtime.MonitorTypeStatusList()
+GET      /RealtimeStatus                                                      controllers.Realtime.realtimeStatus()
+GET      /RealtimeStatusContent                                               controllers.Realtime.realtimeStatusContent()
+
+#Report
+GET      /Report                                                              controllers.Report.monitorReport()
+GET      /monitorReport/:monitor/:reportType/:reportDate                      controllers.Report.getMonitorReport(monitor, reportType, reportDate:Long, outputTypeStr="html")
+GET      /PDF/monitorReport/:monitor/:reportType/:reportDate                  controllers.Report.getMonitorReport(monitor, reportType, reportDate:Long, outputTypeStr="pdf")
+GET      /Excel/monitorReport/:monitor/:reportType/:reportDate                controllers.Report.getMonitorReport(monitor, reportType, reportDate:Long, outputTypeStr="excel")
+
+GET      /MonitorMonthlyHourReport                                            controllers.Report.monitorMonthlyHourReport
+GET      /MonthlyHourReport/:monitor/:monitorType/:reportDate                 controllers.Report.monthlyHourReport(monitor, monitorType, reportDate:Long, outputTypeStr="html")
+
+GET      /Audit                                                               controllers.Report.audit
+GET      /AuditReport/:monitor/:monitorType/:start/:end                       controllers.Report.auditReport(monitor, monitorType, start:Long, end:Long)
+GET      /ReauditReport/:monitor/:monitorType/:start/:end                     controllers.Report.reauditReport(monitor, monitorType, start:Long, end:Long)
+
+#JSON
+GET      /MonitorType                                                         controllers.Application.monitorTypeList
+POST     /MonitorType/:id                                                     controllers.Application.upsertMonitorType(id)
+PUT      /MonitorType/:id                                                     controllers.Application.upsertMonitorType(id)
+
+GET      /Monitor                                                             controllers.Application.monitorList
+GET      /IndPark                                                             controllers.Application.indParkList
+GET      /ReportUnit                                                          controllers.Application.reportUnitList
+GET      /MenuRight                                                           controllers.Application.menuRightList
+
+GET      /Record/:monitor/:monitorType/:start/:end                            controllers.Query.recordList(monitor, monitorType, start:Long, end:Long)
+PUT      /Record/:monitor/:monitorType                                        controllers.Query.updateRecord(monitor, monitorType)
+
+#GET		/WindRose				controllers.Query.windRose
+#GET		/MonitorTypeRose		controllers.Query.monitorTypeRose
+#GET		/WindRoseReport/:monitor/:monitorType/:nWays/:start/:end	controllers.Query.windRoseReport(monitor, monitorType, nWays:Int, start, end)
+
+#import Data
+GET      /importEpaXLS                                                        controllers.Application.importEpa103
+
+POST     /MinData                                                             controllers.Application.receiveMinData
+POST     /HourData                                                            controllers.Application.receiveHourData
+POST     /Calibration                                                         controllers.Application.receiveCalibration
+# websockets
+GET      /MinMonthlyReportSocket                                              controllers.Report.getMinMonthlySocket
+
+#AUDIT
+GET      /AuditConfigPage                                                     controllers.Application.auditConfig
+GET      /AuditConfig                                                         controllers.Application.getAllMonitorAuditConfig
+GET      /AuditConfig/:monitor                                                controllers.Application.getMonitorAuditConfig(monitor)
+POST     /AuditConfig/:monitor                                                controllers.Application.setMonitorAuditConfig(monitor)
+
+GET      /TestSMS/:mobile                                                     controllers.Application.testSMS(mobile)
+GET      /TestAlarm                                                           controllers.Application.testAlarm

@@ -1,0 +1,200 @@
+@* outline Template File *@
+@(title: String, user:controllers.Security.UserInfo, content:Html)
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>@title</title>
+    <meta name="author" content="Aragorn Huang">
+
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/font-awesome/css/font-awesome.css" rel="stylesheet">
+    <link href="assets/css/plugins/iCheck/custom.css" rel="stylesheet">
+    <link href="assets/css/plugins/steps/jquery.steps.css" rel="stylesheet">
+    <link href="assets/css/animate.css" rel="stylesheet">
+    <link href="assets/css/style.css" rel="stylesheet">
+    <link href="assets/css/aqm.css" rel="stylesheet">
+
+    <!-- Data Tables -->
+    <link href='assets/css/plugins/dataTables/dataTables.bootstrap.css' rel="stylesheet">
+    <link href='assets/css/plugins/dataTables/dataTables.responsive.css' rel="stylesheet">
+    <link href='assets/css/plugins/dataTables/dataTables.tableTools.min.css' rel="stylesheet">
+	<link href='assets/css/plugins/dataTables/jquery.dataTables.min.css' rel="stylesheet">
+    
+	<!-- Datepicker -->
+	<link href="assets/css/plugins/datepicker/datepicker3.css" rel="stylesheet">
+	<link href="assets/css/plugins/datetimepicker/bootstrap-datetimepicker.min.css" rel="stylesheet">
+	<link rel="stylesheet" href="assets/css/angular/datetimepicker.css"/>
+	<link rel="stylesheet" href="assets/css/angular/angular-wizard.css"/>
+	<link rel="stylesheet" href="assets/css/ng-table.css">
+
+	<!-- Mainly scripts -->
+	<script src="assets/js/jquery-2.2.0.min.js"></script>
+	<script src="assets/js/bootstrap.min.js"></script>
+	<script src="assets/js/plugins/metisMenu/jquery.metisMenu.js"></script>
+	<script src="assets/js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
+
+    <!-- Data Tables -->
+    
+    <script src='assets/js/plugins/dataTables/jquery.dataTables.js'></script>
+    <script src='assets/js/plugins/dataTables/dataTables.bootstrap.js'></script>
+    <script src='assets/js/plugins/dataTables/dataTables.responsive.js'></script>
+    <script src='assets/js/plugins/dataTables/dataTables.tableTools.min.js'></script>
+
+    <script src="assets/js/plugins/datepicker/bootstrap-datepicker.js"></script>
+	<script src="assets/js/moment-with-locales.min.js"></script>
+	<script src="assets/js/plugins/datetimepicker/bootstrap-datetimepicker.min.js"></script>
+    <script src="assets/js/plugins/steps/jquery.steps.min.js"></script>
+    <script src="assets/js/plugins/validate/jquery.validate.min.js"></script>
+
+
+	<script src="assets/js/highcharts/highcharts.js"></script>
+	<script src="assets/js/highcharts/highcharts-more.js"></script>
+	<script src="assets/js/highcharts/modules/funnel.js"></script>
+	<script src="assets/js/highcharts/modules/exporting.js"></script>
+	<script src="assets/js/plugins/jeditable/jquery.jeditable.js"></script>
+
+    <script type="text/javascript"
+      src="http://maps.googleapis.com/maps/api/js?key=AIzaSyCFuSnApEhdYSANwfU4OZ4tH902Tu3vjFI">
+    </script>
+    
+    <script src="assets/js/plugins/infobox/infobox_packed.js"></script>
+
+	<!-- Custom and plugin javascript -->
+	<script src="assets/js/inspinia.js"></script>
+	<script src="assets/js/plugins/pace/pace.min.js"></script>
+	<script src="assets/localization/highchartOption.js"></script>
+    <script>    
+    	var chartHeight=500;    	
+    </script>
+</head>
+
+<body ng-app="dataLoggerApp" >
+<div id="wrapper">
+    <nav class="navbar-default navbar-static-side" role="navigation">
+        <div class="sidebar-collapse" ng-controller="menuCtrl as ctrl">
+            <ul class="nav metismenu" id="side-menu">
+                <li class="nav-header">
+                    <div class="dropdown profile-element">
+                            <span class="clear text-center"> 
+                            <h3>@user.name</h3>
+                            </span>
+                    </div>
+                    <div class="logo-element">
+                        	iDAS
+                    </div>
+                </li>
+                <li ng-show="ctrl.displayRealtime()">
+                	<a href="#"><i class="fa fa-line-chart fa-lg"></i> <span class="nav-label">即時資訊</span> <span class="fa arrow"></span></a>
+                	<ul class="nav nav-second-level">
+                    	<li ><a href="#/">即時趨勢</a></li>
+                    	<li ><a href="#/RealtimeStatus">即時數據</a></li>
+                	</ul>
+            	</li>
+                <li ng-show="ctrl.displayDataQuery()">
+                	<a href="#"><i class="fa fa-bar-chart-o fa-lg"></i> <span class="nav-label">數據查詢</span><span class="fa arrow"></span></a>
+                	<ul class="nav nav-second-level">
+                    	<li><a href="#/History" >歷史資料查詢</a></li>
+                    	<li><a href="#/HistoryTrend" >歷史趨勢圖</a></li>
+                    	<li><a href="#/Alarm" >警報記錄查詢</a></li>
+                    	<li><a href="#/WindRose" >玫瑰圖</a></li>
+                	</ul>
+            	</li>
+            	<li ng-show="ctrl.displayDataQuery()">
+                	<a href="#"><i class="fa fa-table fa-lg"></i> <span class="nav-label">報表查詢 </span></a>
+                	<ul class="nav nav-second-level">
+                    	<li><a href="#/Report" >監測報表</a></li>
+                    	<li><a href="#/MonitorMonthlyHourReport" >月份時報表</a></li>
+                    	<li><a href="#/Audit" >資料檢核報表</a></li>
+                	</ul>
+            	</li>            	
+            	<li ng-show="ctrl.displaySystemManagement()">
+                	<a href="#"><i class="fa fa-cog fa-lg"></i> <span class="nav-label">系統管理</span></a>
+                	<ul class="nav nav-second-level">
+                		<li><a href="#/MonitorTypeConfig" >測項管理</a></li>
+                		<li><a href="#/MonitorConfig" >測站管理</a></li>
+                		<li><a href="#/AuditConfig" >資料檢核設定</a></li>
+                    	<li><a href="#/ManualAudit" >人工資料註記</a></li>
+                    	<li><a href="#/ManualAuditHistory" >人工註記查詢</a></li>
+                    	<li><a href="#/UserManagement" >使用者管理</a></li>
+                    	<li><a href="#/GroupManagement" >權限群組管理</a></li> 
+						<li><a href="#/DataManagement" >資料管理</a></li>                                       
+                 	</ul>
+            	</li>
+            </ul>
+
+        </div>
+    </nav>
+
+    <div id="page-wrapper" class="gray-bg">
+        <div class="row border-bottom">
+            <nav class="navbar navbar-static-top white-bg" role="navigation" style="margin-bottom: 0">
+                <div class="navbar-header">
+                    <a class="navbar-minimalize minimalize-styl-2 btn btn-primary " href="#"><i class="fa fa-bars"></i> </a>
+                    <form role="search" class="navbar-form-custom" method="post" action="#">
+                        <div class="form-group">
+                            <input type="text" placeholder="宜蘭縣固定汙染源監測系統" class="form-control" name="top-search" id="top-search">
+                        </div>
+                    </form>
+                </div>
+                <ul class="nav navbar-top-links navbar-right">
+                    <li>
+                        <a href="/logout">
+                            <i class="fa fa-sign-out"></i>登出
+                        </a>
+                    </li>
+                </ul>
+
+            </nav>
+        </div>
+        <div class="row wrapper border-bottom white-bg">
+    		<div class="col-lg-10" ng-controller="MenuCtrl as ctrl">
+        		<h3 ng-bind="ctrl.breadcrumb.title"></h3>
+    		</div>
+		</div>
+        <div class="wrapper wrapper-content animated fadeInRight" ng-view></div>
+    </div>
+</div>
+
+<!-- Angular JS -->
+<script src="assets/js/angular/angular.js"></script>
+<script src="assets/js/angular/angular-route.min.js"></script>
+<script src="assets/js/angular/angular-resource.js"></script>
+<script src="assets/js/angular/angular-animate.js"></script>
+<script src="assets/js/angular/angular-touch.js"></script>
+<script src="assets/js/angular/angular-sanitize.js"></script>
+<script src="assets/js/angular/ui-bootstrap-tpls-2.2.0.min.js"></script>
+<script src="assets/js/angular/ng-table.js"></script>
+<script src="assets/js/angular/dateTimeInput.js"></script>
+<script src="assets/js/angular/datetimepicker.js"></script>
+<script src="assets/js/angular/datetimepicker.templates.js"></script>
+<script src="assets/js/angular/smart-table.js"></script>
+<script src="assets/js/angular/angular-wizard.js"></script>
+
+
+<!-- App JS -->
+<script src="assets/js/app/dataLogger.js"></script>
+<script src="assets/js/app/history.js"></script>
+<script src="assets/js/app/historyTrend.js"></script>
+<script src="assets/js/app/alarm.js"></script>
+<script src="assets/js/app/windRose.js"></script>
+<script src="assets/js/app/menu.js"></script>
+<script src="assets/js/app/report.js"></script>
+<script src="assets/js/app/user.js"></script>
+<script src="assets/js/app/group.js"></script>
+<script src="assets/js/app/monthlyHourReport.js"></script>
+<script src="assets/js/app/realtimeStatusList.js"></script>
+<script src="assets/js/app/mtConfig.js"></script>
+<script src="assets/js/app/mtRealtimeChart.js"></script>
+<script src="assets/js/app/mtRealtimeChart2.js"></script>
+<script src="assets/js/app/miniMtList.js"></script>
+<script src="assets/js/app/monitorTypeList.js"></script>
+<script src="assets/js/app/manualAudit.js"></script>
+<script src="assets/js/app/manualAuditHistory.js"></script>
+<script src="assets/js/app/audit.js"></script>
+</body>
+</html>

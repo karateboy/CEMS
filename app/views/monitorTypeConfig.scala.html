@@ -1,0 +1,102 @@
+@* monitorTypeConfig Template File *@
+@import MonitorType._
+<div class="row">
+    <div class="col-lg-12">
+    	<div class="panel panel-primary">
+    		<div class="panel-heading panel-title"" >
+        		有效數據百分比	
+        	</div>
+        	<div class="panel-body panel-collapse" id="effectiveRatio">
+        		<form id="effectiveRatioForm" class="form-horizontal">
+						<br/>
+						<div class="form-group">
+							<label class="col-lg-1 control-label">百分比:</label>
+							<input class="col-lg-1" id="effectiveRatio" value="75" readonly>%																				
+						</div>						
+				</form>        		
+        	</div>
+    	</div>
+        <div class="panel panel-primary">
+        <div class="panel-heading panel-title"" >
+        	點擊測項參數加以編輯	
+        </div>
+        <div class="panel-body panel-collapse" id="monitorType">    		
+			<div id="monitorTypeDiv" align="center">
+            	<table id="monitorTypeTable" class="table" cellspacing="0" width="100%">
+            		<thead>
+            			<tr>
+            				<th>測項代碼</th>
+            				<th>名稱</th>
+            				<th>單位</th>
+            				<th>警報值</th>
+            				<th>超高警報值</th>
+            				<th>小數點位數</th>
+            				<th>標準1</th>
+            				<th>標準2</th>
+            				<th>標準3</th>
+            				<th>標準4</th>
+            				
+            			</tr>
+            		</thead>
+            		<tbody>
+            			@for(mt<-MonitorType.mtvList){
+            				<tr id="@map(mt)._id">
+            					<th>@map(mt)._id</th>
+            					<td col="desp">@map(mt).desp</td>
+            					<td col="unit">@map(mt).unit</td>
+            					<td col="std_internal">@MonitorType.format(mt, map(mt).std_internal) </td>
+            					<td col="std_law">@MonitorType.format(mt, map(mt).std_law) </td>
+            					<td col="prec">@map(mt).prec</td>
+            					<td col="level1">@MonitorType.format(mt, map(mt).level1)</td>
+            					<td col="level2">@MonitorType.format(mt, map(mt).level2)</td>
+            					<td col="level3">@MonitorType.format(mt, map(mt).level3)</td>
+            					<td col="level4">@MonitorType.format(mt, map(mt).level4)</td>
+            				</tr>
+            			}
+            		</tbody>
+            	</table>          		
+            </div>
+       </div>
+       </div>
+	</div>
+</div>
+<script>
+var dataTableL10N = '/assets/localization/zh_tw.json';
+</script>
+<script>
+$(document).ready(function() {
+        /* Init DataTables */
+        
+        var oTable = $('#monitorTypeTable').dataTable({
+        	language: {
+				url: dataTableL10N,							
+			},
+        	searching: false,
+        	ordering:  true,
+			paging: false
+        });
+		
+        /* Apply the jEditable handlers to the table */
+        oTable.$('td').editable( '/SaveMonitorTypeConfig', {
+        	indicator : '儲存中...',
+            tooltip   : '點擊該項目加以編輯...',
+            cancel    : '取消',
+            submit    : '確認',            
+            name : 'data', 
+            callback: function( sValue, y ) {
+                console.log("callback");
+                console.log(sValue);
+                console.log(y);
+            },           
+            submitdata: function ( value, settings ) {
+                var $me = $(this);
+                return {                    
+                    id: $me.parent().attr("id") + ":" + $me.attr("col")
+                };
+            },
+
+            "width": "90%",
+            "height": "100%"
+        } );
+});
+</script>

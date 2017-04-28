@@ -1,0 +1,48 @@
+@* compareRule Template File *@
+<div id="compareRule" class="tab-pane" align="left">
+	<br/>
+	<h3>說明:</h3>
+	<p>由同一測站不同汙染物的從屬關係,進行合理性判斷.</p>
+	<form id="compareForm" class="form-horizontal">
+        <div class="form-group">
+			<label class="col-lg-1 control-label">啟用</label>
+        	<div class="col-lg-1">        		
+            	<input type="checkbox" name="enabled" class="form-control">
+            </div>
+        </div>
+                    	
+        <h3>測項比較規則:</h3>
+ 		<ul>
+			<li>THC > CH4 且  THC>NMHC </li>
+			<li>NOx >= NO2 且NOx >= NO</li>
+			<li>PM10 <= TSP 且 PM25 <= PM10</li>
+			<li>相對溼度<=100%</li>
+		</ul>
+		<div class="form-group">
+        	<div class="col-lg-offset-2 col-lg-10">
+            	<button class="btn btn-primary" type="submit">確認</button>
+            </div>
+        </div>
+	</form>
+</div>
+<script>
+function updateCompareForm(){
+	var config = auditConfig.compareRule;
+	var $enabled = $('#compareForm :input[name="enabled"]')
+	$enabled.prop('checked', config.enabled);
+}
+
+$('#compareForm :input[name="enabled"]').click(function(){
+	var $me=$(this);
+});
+
+$('#compareForm').submit(function(){
+	var param={};
+	var $enabled = $('#compareForm :input[name="enabled"]')
+	param.enabled = $enabled.prop("checked");
+	auditConfig.compareRule = param;
+	postAuditCfg();
+	event.preventDefault();
+});
+
+</script>

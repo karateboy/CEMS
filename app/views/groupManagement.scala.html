@@ -1,0 +1,124 @@
+@* userManagement Template File *@
+@import controllers.Security._
+@(userInfo: controllers.Security.UserInfo)
+<div class="row" ng-controller="groupCtrl as ctrl">
+	<div class="col-lg-12">
+		<div class="ibox float-e-margins">
+<div class="ibox-content">
+<ul class="nav nav-tabs">
+@if(userInfo.isAdmin){
+<li>
+	<a data-toggle="tab" data-target="#newGroup">
+	<span class="glyphicons glyphicons-hotspot"></span>新增權限群組</a>
+</li>
+<li>
+	<a data-toggle="tab" data-target="#deleteGroup" id='deleteUsrTab'>
+	<span class="glyphicons glyphicons-hotspot"></span>刪除權限群組</a>
+</li>
+
+<li class="active">
+	<a data-toggle="tab" data-target="#updateGroup" id='updateUsrTab'>
+	<span class="glyphicons glyphicons-hotspot"></span>更新權限群組</a>
+</li>
+}
+</ul>
+<div class="tab-content">
+@if(userInfo.isAdmin){
+<div id="newGroup" class="tab-pane" align="left">
+<br/>
+   		<form class="form-horizontal">
+            <div class="form-group">
+            	<label class="col-lg-2 control-label">群組名稱:</label>
+                <div class="col-lg-10">
+                	<input name='name' type="text" placeholder="群組名稱" ng-model="ctrl.groupName" class="form-control" required >
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-lg-offset-2 col-lg-10">
+                    <button class="btn btn-primary" type="submit" ng-click="ctrl.newGroup()"
+                    	ng-disabled="!ctrl.groupName">新增</button>
+                </div>
+            </div>
+        </form>
+</div>
+<div id="deleteGroup" class="tab-pane" align="left">
+<br/>
+	<form class="form-horizontal">
+		<div class="form-group">
+	    	<label class="col-lg-1 control-label">群組:</label>
+	        	<div class="col-lg-11">
+	        	<div class="btn-group">	            				            				
+	            <label class="btn btn-outline btn-primary" ng-model="$parent.selectedGroup" 
+	            	ng-repeat="group in ctrl.groupList"  uib-btn-radio="group">{{group._id}}</label>	            			
+	            </div>
+	        </div>	            			            		
+	    </div>
+    	<div class="form-group">
+        	<div class="col-lg-offset-2 col-lg-10">
+            	<button class="btn btn-primary" type="submit" ng-click="ctrl.deleteGroup()" ng-disabled="!selectedGroup">刪除</button>
+            </div>
+        </div>
+	</form>
+</div>
+}
+<div id="updateGroup" class="tab-pane active" align="left">
+<br/>
+   	<form class="form-horizontal">
+   		<div class="form-group">
+	    	<label class="col-lg-1 control-label">群組:</label>
+	        	<div class="col-lg-11">
+	        	<div class="btn-group">	            				            				
+	            <label class="btn btn-outline btn-primary" ng-model="$parent.selectedGroup" 
+	            	ng-repeat="group in ctrl.groupList"  uib-btn-radio="group" ng-change="ctrl.selectedGroupChanged()">{{group._id}}</label>	            			
+	            </div>
+	        </div>	            			            		
+	    </div>
+	    <div class="form-group" ng-show="selectedGroup">
+	    	<label class="col-lg-1 control-label">權限</label>
+	        <div class="col-lg-11">
+	   		<div class="btn-group">	            				            				
+	        	<label class="btn btn-outline btn-primary" ng-model="$parent.checkedMenuRight[menuRight.id]" ng-repeat="menuRight in ctrl.menuRightList"  
+	            	uib-btn-checkbox>{{menuRight.desp}}</label>	            			
+	        </div>
+	        </div>	            			            		
+	   </div>
+    	<div class="form-group" ng-show="selectedGroup">
+	    	<label class="col-lg-1 control-label">工業區</label>
+	        	<div class="col-lg-11">
+	   			<div class="btn-group">	            				            				
+	            	<label class="btn btn-outline btn-primary" ng-model="$parent.checkedIndPark[park]" ng-repeat="park in ctrl.indParkList"  
+	            	uib-btn-checkbox>{{park}}</label>	            			
+	            </div>
+	        	</div>	            			            		
+	   </div>
+       <div class="form-group" ng-show="selectedGroup">
+	   		<label class="col-lg-1 control-label">測站</label>
+	        <div class="col-lg-11">
+	        	<div class="btn-group">	            				            				
+	            <label class="btn btn-outline btn-primary" ng-model="$parent.checkedMonitorId[m._id]" ng-repeat="m in ctrl.monitorList | filter:ctrl.indParkMonitor"  
+	            	uib-btn-checkbox>{{m.indParkName+"-"+m.dp_no}}</label>	            			
+	            </div>
+	        </div>	            			            		
+	   </div>
+       <div class="form-group" ng-show="selectedGroup">
+	   		<label class="col-lg-1 control-label">測項</label>
+	        <div class="col-lg-11">
+	        <div class="btn-group">	            				            				
+	        	<label class="btn btn-outline btn-primary" ng-model="$parent.checkedMtId[mt._id]" ng-repeat="mt in ctrl.monitorTypeList"  
+	            	uib-btn-checkbox>{{mt.desp}}</label>	            			
+	        </div>
+	        </div>	            			            		
+	   </div>
+    	
+       <div class="form-group">    		
+        	<div class="col-lg-offset-2 col-lg-10">
+            	<button class="btn btn-primary" type="submit" ng-click="ctrl.updateGroup()">更新</button>
+            </div>
+       </div>
+    </form>
+</div>
+</div>
+</div>
+</div>                   
+</div>
+</div>

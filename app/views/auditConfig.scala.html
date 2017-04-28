@@ -1,0 +1,162 @@
+@* auditConfig Template File *@
+@()
+<script>
+var activeMonitor = $('#monitor').val();
+var auditConfig={};
+function postAuditCfg(){
+	$.ajax({
+		url : "/AuditConfig/" + encodeURIComponent(activeMonitor),
+		data : JSON.stringify(auditConfig),
+		contentType : "application/json; charset=utf-8",
+		type : "POST",
+		dataType : "json",
+		success : function(result) {
+			if(result.ok)
+				alert('成功');
+			else
+				alert('失敗'+result.msg);
+		},
+		error : function(xhr, status, errorThrown) {
+			console.log("錯誤訊息:" + status + "-" + errorThrown);
+		},
+		complete : function(xhr, status) {
+		}
+	});		
+}
+
+</script>
+<div class="row">
+    <div class="col-lg-12">
+        <div class="panel panel-primary" id="paramPanel">
+            <div class="panel-heading panel-title" >
+            	<a data-toggle="collapse" data-parent="#accordion" href="#reportParam">測站</a>	
+            </div>
+       		<div class="panel-body panel-collapse in" id="reportParam">
+        	<div class="btn-group" data-toggle="buttons">
+        		@for(m<-Monitor.mvList){
+        			@if(m == Monitor.mvList.head){
+        				<label class="btn btn-outline btn-primary dim active">
+        				<input type="radio" name="monitor" id="@Monitor.map(m)._id" checked>@Monitor.map(m).dp_no</label>	
+        			}else{
+        				<label class="btn btn-outline btn-primary dim">
+        				<input type="radio" name="monitor" id="@Monitor.map(m)._id" checked>@Monitor.map(m).dp_no</label>
+        			}        					
+             	}
+			</div>
+			<input id='monitor' name='monitor' type="hidden" class="form-control" value="@Monitor.map(Monitor.mvList.head)._id">
+         	</div>
+        </div>
+	</div>
+</div>
+<div class="row">
+<div class="col-lg-12">
+<div class="ibox float-e-margins">
+<div class="ibox-title">資料檢核設定</div>
+<div class="ibox-content">
+<ul class="nav nav-tabs">
+	<li class="active">
+		<a data-toggle="tab" data-target="#minMaxRule"> <span class="glyphicons glyphicons-hotspot"></span>極大極小值稽核</a>
+	</li>
+	<li>
+		<a data-toggle="tab" data-target="#compareRule"> <span class="glyphicons glyphicons-hotspot">合理性稽核</span></a>
+	</li>
+	<li>
+		<a data-toggle="tab" data-target="#differenceRule"> <span class="glyphicons glyphicons-hotspot">單調性稽核</span></a>
+	</li>
+	<li>
+		<a data-toggle="tab" data-target="#spikeRule"> <span class="glyphicons glyphicons-hotspot">突波高值稽核</span></a>
+	</li>
+	<li>
+		<a data-toggle="tab" data-target="#persistenceRule"> <span class="glyphicons glyphicons-hotspot">持續性稽核</span></a>
+	</li>
+	<li>
+		<a data-toggle="tab" data-target="#monoRule"> <span class="glyphicons glyphicons-hotspot">一致性稽核</span></a>
+	</li>
+	<li>
+		<a data-toggle="tab" data-target="#twoHourRule"> <span class="glyphicons glyphicons-hotspot">小時值變換驗證</span></a>
+	</li>
+	<li>
+		<a data-toggle="tab" data-target="#threeHourRule"> <span class="glyphicons glyphicons-hotspot">三小時變化值驗證</span></a>
+	</li>
+	<li>
+		<a data-toggle="tab" data-target="#fourHourRule"> <span class="glyphicons glyphicons-hotspot">四小時變化值驗證</span></a>
+	</li>
+	<li>
+		<a data-toggle="tab" data-target="#overInternalStdMinRule"> <span class="glyphicons glyphicons-hotspot">分鐘值超過內控</span></a>
+	</li>
+	<li>
+		<a data-toggle="tab" data-target="#dataReadyMinRule"> <span class="glyphicons glyphicons-hotspot">分鐘值回傳超時</span></a>
+	</li>
+</ul>
+<div class="tab-content ibox-content">
+@maxMinRule()
+@compareRule()
+@differenceRule()
+@spikeRule()
+@persistenceRule()
+@monoRule()
+@twoHourRule()
+@threeHourRule()
+@fourHourRule()
+@overInternalStdMinRule()
+@dataReadyMinRule()
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+var std_internal={};
+@for(mt<-MonitorType.mtvList){
+	@if(MonitorType.map(mt).std_internal.isDefined){
+		std_internal['@mt']=@MonitorType.map(mt).std_internal;
+	}
+}
+</script>
+<script>
+$( document ).ready(function(){
+	function updateUI(){
+		updateMinMaxForm();
+		updateCompareForm();
+		updateDifferenceForm();
+		updateSpikeForm();
+		updatePersistenceForm();
+		updateMonoForm();
+		updatetwoHourForm();
+		updatethreeHourForm();
+		updatefourHourForm();
+		updateOverInternalStdMinForm();
+		updateDataReadyMinForm();
+	}
+	
+	function refreshAuditConfig(monitor){
+		auditConfig={};
+		$.ajax({
+			url: "/AuditConfig/"+ encodeURIComponent(monitor),
+			data: "",
+			contentType: "application/json; charset=utf-8",
+			method: "GET",
+			cache:false,
+			dataType: "json",
+			success: function(config){
+				auditConfig=config;
+				updateUI();				
+			},
+			error: function(xhr, status, errorThrown){
+				console.log("失敗:"+ errorThrown);
+			},
+			complete: function(xhr, status){
+			}					
+		});	
+	}
+	
+	$("input[name='monitor']").change(function(){
+		var me = $(this)		
+		refreshAuditConfig(me.attr('id'));		
+		activeMonitor = me.attr('id');
+		$('#monitor').val(activeMonitor);	
+	});
+
+	refreshAuditConfig(activeMonitor);	
+});
+</script>

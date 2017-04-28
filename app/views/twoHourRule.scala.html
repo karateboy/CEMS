@@ -1,0 +1,103 @@
+@* twoHourRule Template File *@
+<div id="twoHourRule" class="tab-pane" align="left">
+	<br/>
+	<h3>說明:</h3>
+	<p>連續兩小時測值變化如超過系統設定之絕對值,該小時值註記為異常值</p>
+	<form id="twoHourForm" class="form-horizontal">
+        <div class="form-group">
+			<label class="col-lg-1 control-label">啟用</label>
+        	<div class="col-lg-1">        		
+            	<input type="checkbox" name="enabled" class="form-control">
+            </div>
+        </div>
+		<div id='twoHourParameter'>
+        <table class="table">
+        	<thead>
+        		<tr>
+        			<th>測項</th>
+        			<th>絕對值</th>
+        		</tr>
+        	</thead>
+        	<tbody>
+        		@for(mt<-MonitorType.mtvList){
+        			<tr>
+        				<th><input type="checkbox" name="monitorType" id='@mt' disabled>@MonitorType.map(mt).desp</th>
+        				<td><input name="absValue" id='@mt' value='10' disabled></td>
+        			</tr>
+        		}
+        	</tbody>
+        </table>
+        </div>
+		
+		<div class="form-group">
+        	<div class="col-lg-offset-2 col-lg-10">
+            	<button class="btn btn-primary" type="submit">確認</button>
+            </div>
+        </div>
+	</form>
+</div>
+<script>
+function updatetwoHourForm(){
+	var config = auditConfig.twoHourRule;
+	var $enabled = $('#twoHourForm :input[name="enabled"]');
+	$enabled.prop('checked', config.enabled);
+	var $inputs = $('#twoHourParameter :input');
+	function findtwoHourCfg(array, id){
+		for(var i=0;i<array.length;i++){
+			if(array[i].id == id)
+				return array[i]
+		}
+
+		return null;				
+	}
+	
+	for(var i=0;i<$inputs.length;i++){
+		var $input = $inputs.eq(i);
+		$input.prop('disabled', !config.enabled);
+		if($input.prop('type') == 'checkbox'){
+			var id = $input.prop('id');
+			var cfg = findtwoHourCfg(config.monitorTypes, id);
+			if(cfg != null){
+				$input.prop('checked', true);
+				var $abs = $input.parent().next().children();
+				$abs.val(cfg.abs.toFixed(2));
+			}else{
+				$input.prop('checked', false);
+				var $abs = $input.parent().next().children();
+				$abs.val(10);
+			}				
+		}
+	}	
+}
+
+$('#twoHourForm :input[name="enabled"]').click(function(){
+	var $me=$(this);
+	var $inputs = $('#twoHourParameter :input');
+	var disabled = !$me.prop('checked'); 
+	for(var i=0;i<$inputs.length;i++){
+		var $check = $inputs.eq(i);
+		$check.prop("disabled", disabled);
+	}
+});
+$('#twoHourForm').submit(function(){
+	var param={};
+	var $enabled = $('#twoHourForm :input[name="enabled"]')
+	var $inputs = $('#twoHourParameter :input[name="monitorType"]');
+	param.enabled = $enabled.prop("checked");
+	param.monitorTypes=[];
+	for(var i=0;i<$inputs.length;i++){
+		var $check = $inputs.eq(i);
+		if($check.prop("checked")){				
+			var mt={};
+			mt.id = $check.prop('id');
+			var $abs = $check.parent().next().children();				
+			mt.abs = parseFloat($abs.val());
+			param.monitorTypes.push(mt);
+		}
+	}
+	auditConfig.twoHourRule = param;
+	postAuditCfg();
+	event.preventDefault();
+});
+
+</script>

@@ -1,0 +1,75 @@
+@* monitorTypeConfig Template File *@
+@import Monitor._
+<div class="row">
+    <div class="col-lg-12">
+        <div class="panel panel-primary">
+        <div class="panel-heading panel-title"" >
+        	點擊測項參數加以編輯	
+        </div>
+        <div class="panel-body panel-collapse" id="monitorType">    		
+			<div id="monitorTypeDiv" align="center">
+            	<table id="monitorTypeTable" class="table">
+            		<thead>
+            			<tr>
+            				<th>工業區</th>
+            				<th>測站</th>
+            				<th>緯度</th>
+            				<th>經度</th>
+            			</tr>
+            		</thead>
+            		<tbody>
+            			@for(m<-Monitor.mvList){
+            				<tr id="@map(m)._id">
+            					<th>@map(m).indParkName</th>
+            					<th>@map(m).dp_no</th>
+            					<td col="lat">@Monitor.format(map(m).lat)</td>
+            					<td col="lng">@Monitor.format(map(m).lng)</td>
+            				</tr>
+            			}
+            		</tbody>
+            	</table>          		
+            </div>
+       </div>
+       </div>
+	</div>
+</div>
+<script>
+var dataTableL10N = '/assets/localization/zh_tw.json';
+</script>
+<script>
+$(document).ready(function() {
+        /* Init DataTables */
+        
+        var oTable = $('#monitorTypeTable').dataTable({
+        	language: {
+				url: dataTableL10N,							
+			},
+        	searching: false,
+        	ordering:  true,
+			paging: false
+        });
+		
+        /* Apply the jEditable handlers to the table */
+        oTable.$('td').editable( '/SaveMonitorConfig', {
+        	indicator : '儲存中...',
+            tooltip   : '點擊該項目加以編輯...',
+            cancel    : '取消',
+            submit    : '確認',            
+            name : 'data', 
+            callback: function( sValue, y ) {
+                console.log("callback");
+                console.log(sValue);
+                console.log(y);
+            },           
+            submitdata: function ( value, settings ) {
+                var $me = $(this);
+                return {                    
+                    id: $me.parent().attr("id") + ":" + $me.attr("col")
+                };
+            },
+
+            "width": "90%",
+            "height": "100%"
+        } );
+});
+</script>

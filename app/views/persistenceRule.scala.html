@@ -1,0 +1,97 @@
+@* persistenceRule Template File *@
+<div id="persistenceRule" class="tab-pane" align="left">
+	<br/>
+	<h3>說明:</h3>
+	<p>連續多筆值相等, 視為連續性數值</p>
+	<form id="persistenceForm" class="form-horizontal">
+        <div class="form-group">
+			<label class="col-lg-1 control-label">啟用</label>
+        	<div class="col-lg-1">        		
+            	<input type="checkbox" name="enabled" class="form-control">
+            </div>
+        </div>
+		<div id='persistenceParameter'>
+        	<label class="col-lg-1 control-label">連續筆數</label>
+            <div class="col-lg-10">
+            	<input name='same' type="number" class="form-control" value='3' disabled>
+            </div>
+            <div>
+            	<table class="table">
+        		<thead>
+        			<tr>
+        				<th>測項</th>
+        			</tr>
+        		</thead>
+        		<tbody>
+        			@for(mt<-MonitorType.mtvList){
+        				<tr>
+        					<th><input type="checkbox" name="monitorType" id='@mt' disabled>@MonitorType.map(mt).desp</th>
+        				</tr>
+        			}
+        		</tbody>
+        		</table>
+        	</div>            
+        </div>
+	
+		<div class="form-group">
+        	<div class="col-lg-offset-2 col-lg-10">
+            	<button class="btn btn-primary" type="submit">確認</button>
+            </div>
+        </div>
+	</form>
+</div>
+<script>
+function updatePersistenceForm(){
+	var config = auditConfig.persistenceRule;
+	//convert from old config
+	if(!config.monitorTypes)
+		config.monitorTypes = [];
+	
+	var $enabled = $('#persistenceForm :input[name="enabled"]');
+	$enabled.prop('checked', config.enabled);
+	var $same = $('#persistenceForm :input[name="same"]');
+	$same.val(config.same);
+	$same.prop('disabled', !config.enabled);
+	var $inputs = $('#persistenceForm :input[name="monitorType"]');
+	for(var i=0;i<$inputs.length;i++){
+		var $check = $inputs.eq(i);
+		if(config.monitorTypes.indexOf($check.prop('id')) != -1)
+			$check.prop('checked', true);
+		else
+			$check.prop('checked', false);
+		
+		$check.prop("disabled", !config.enabled);
+	}
+}
+
+$('#persistenceForm :input[name="enabled"]').click(function(){
+	var $me=$(this);
+	var $inputs = $('#persistenceParameter :input');
+	var disabled = !$me.prop('checked'); 
+	for(var i=0;i<$inputs.length;i++){
+		var $check = $inputs.eq(i);
+		$check.prop("disabled", disabled);
+	}
+});
+$('#persistenceForm').submit(function(){
+	var param={};
+	var $enabled = $('#persistenceForm :input[name="enabled"]');
+	var $same = $('#persistenceForm :input[name="same"]');
+	var $inputs = $('#persistenceForm :input[name="monitorType"]');
+	param.enabled = $enabled.prop("checked");
+	param.same = parseInt($same.val());
+	
+	param.monitorTypes=[];
+	for(var i=0;i<$inputs.length;i++){
+		var $check = $inputs.eq(i);
+		if($check.prop("checked")){				
+			param.monitorTypes.push($check.prop('id'));
+		}
+	}
+	
+	auditConfig.persistenceRule = param;
+	postAuditCfg();
+	event.preventDefault();
+});
+
+</script>

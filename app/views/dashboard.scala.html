@@ -1,0 +1,392 @@
+@* dashboard Template File *@
+@(privilege: Privilege)
+<div class="row">
+</div>
+<div class="row">
+	<div class="col-lg-12">
+       	<div class="ibox ">
+        	<div class="ibox-content">
+            <div class="map_container">
+   				<div id="realtimeMap" class="map_canvas"></div>
+			</div>
+        	</div>
+    	</div>
+	</div>
+</div>
+<script>
+var monitorInfo = [];
+
+@for(m<-privilege.allowedMonitors){
+	monitorInfo.push(
+		{
+			id:'@Monitor.map(m)._id',
+			name:'@Monitor.map(m).dp_no',
+			lat:'@Monitor.map(m).lat',
+			lng:'@Monitor.map(m).lng',
+			status:'@Monitor.map(m).dp_no',			
+		});	
+}
+
+function refreshRealtimeChart() {
+}
+
+var statusIconUrl = [
+	'assets/images/normal.png',
+	'assets/images/calbration.png',
+	'assets/images/repair.png',
+	'assets/images/maintance.png',
+	'assets/images/warn.png'
+];
+
+</script>
+<script>
+var mapCenter = new google.maps.LatLng(@Monitor.getCenterLat(privilege), @Monitor.getCenterLng(privilege));
+
+// Define a property to hold the Home state.
+HomeControl.prototype.home_ = null;
+
+// Define setters and getters for this property.
+HomeControl.prototype.getHome = function() {
+  return this.home_;
+}
+
+HomeControl.prototype.setHome = function(home) {
+  this.home_ = home;
+}
+
+function HomeControl(map, div, home) {
+  var controlDiv = div;
+  var control = this;
+  control.home_ = home;
+  controlDiv.style.padding = '10px';
+
+  // Set CSS for the control border.
+  var goHomeUI = document.createElement('span');
+  goHomeUI.title = '回到中心';
+  controlDiv.appendChild(goHomeUI);
+
+  // Set CSS for the control interior.
+  var goHomeText = document.createElement('span');
+  goHomeText.innerHTML = '<button>中心</button>';
+  goHomeUI.appendChild(goHomeText);
+  
+  // Set CSS for the control border.
+  var statusUI = document.createElement('span');
+  statusUI.title = '測站狀態';
+  controlDiv.appendChild(statusUI);
+
+  // Set CSS for the control interior.
+  var statusText = document.createElement('span');
+  statusText.innerHTML = '<button>測站狀態</button>';
+  statusUI.appendChild(statusText);
+
+  // Set CSS for the control border.
+  var windUI = document.createElement('span');
+  windUI.title = '風向';
+  controlDiv.appendChild(windUI);
+
+  // Set CSS for the control interior.
+  var windText = document.createElement('span');
+  windText.innerHTML = '<button>風向</button>';
+  windUI.appendChild(windText);
+
+  // Set CSS for the setHome control border.
+  var mapLegendUI = document.createElement('div');
+  mapLegendUI.title = '圖例';
+  controlDiv.appendChild(mapLegendUI);
+
+  // Setup the click event listener for Home:
+  // simply set the map to the control's current home property.
+  google.maps.event.addDomListener(goHomeUI, 'click', function() {
+    var currentHome = control.getHome();
+    map.setCenter(currentHome);
+  });
+  
+  google.maps.event.addDomListener(statusUI, 'click', function() {
+  	statusMarkerArray.map( function(marker) { 
+  		marker.setVisible(true); } );
+  	windMarkerArray.map(function(marker){
+  		marker.setVisible(false);});
+  	windInfoboxArray.map(function(ib){
+  		ib.setVisible(false);
+  	refreshRealtimeInfo();	
+  		}
+  	);
+  });
+  
+  google.maps.event.addDomListener(windUI, 'click', function() {
+  	statusMarkerArray.map( function(marker) { 
+  		marker.setVisible(false); } );
+  	windMarkerArray.map(function(marker){
+  		marker.setVisible(true);});
+  	windInfoboxArray.map(function(ib){
+  		ib.setVisible(true);}
+  	);	
+  });
+  
+}
+
+
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min)) + min;
+}
+
+function refreshMarker(realtime){
+	for(var i=0;i<monitorInfo.length;i++){
+		var info = realtime.info[i];
+		var icon = {
+				url:statusIconUrl[info.status],
+				anchor: new google.maps.Point(12, 12),
+				scaledSize:new google.maps.Size(24,24) 
+			};
+		statusMarkerArray[i].setIcon(icon); 
+		if(info.status == 4)
+			statusMarkerArray[i].setAnimation(google.maps.Animation.BOUNCE);
+		
+		windMarkerArray[i].icon.rotation = info.winDir;
+		windInfoboxArray[i].setContent(Math.round(info.winSpeed*100)/100 + "m/s");
+		monitorInfo[i].status = info.statusStr;
+	}
+}
+
+function refreshRealtimeInfo(){
+	$.ajax({
+		url : "/JSON/realtime/map",
+		data : "",
+		contentType : "application/json; charset=utf-8",
+		type : "GET",
+		dataType : "json",
+		success : function(result) {
+			refreshMarker(result);
+		},
+		error : function(xhr, status, errorThrown) {
+			console.log("錯誤訊息:" + status + "-" + errorThrown);
+		},
+
+		complete : function(xhr, status) {
+			
+		}
+	});
+}
+
+var statusMarkerArray = [];
+
+
+	function initInfoWindow(marker, i){
+		var infoWindow = new google.maps.InfoWindow();
+		var monitor = monitorInfo[i];
+		google.maps.event.addListener(marker, 'click', function() {
+			if(monitor.status.length != 0){
+				infoWindow.setContent(monitor.status);
+				infoWindow.open(marker.get('map'), marker);	
+			}			  
+		});		
+	}
+	
+	function initMonitorMarker(map) {
+		for (var i = 0; i < monitorInfo.length; i++) {
+			var monitor = monitorInfo[i];
+			var marker = new google.maps.Marker({
+				position : new google.maps.LatLng(monitor.lat, monitor.lng),
+				map : map,
+				title : monitor.name,
+				icon : {
+					url : statusIconUrl[0],
+					anchor : new google.maps.Point(12, 12),
+					scaledSize : new google.maps.Size(24, 24)
+				}
+			});
+
+			initInfoWindow(marker, i);			
+			statusMarkerArray.push(marker);
+		}
+		
+		for (var i = 0; i < statusMarkerArray.length; i++) {
+						
+		}
+	}
+
+	var windMarkerArray = [];
+	function initWindMarker(map) {
+		for (var i = 0; i < monitorInfo.length; i++) {
+			var monitor = monitorInfo[i];
+			var marker = new google.maps.Marker({
+				position : new google.maps.LatLng(monitor.lat, monitor.lng),
+				map : map,
+				title : monitor.name,
+				icon : {
+					path : google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+					fillColor : 'red',
+					strokeColor : "red",
+					strokeWeight : 4,
+					rotation : 0,
+					//anchor:google.maps.Point(-20,0),
+					scale : 4
+				},
+				visible : false
+			});
+			windMarkerArray.push(marker);
+		}
+	}
+
+	var windInfoboxArray = [];
+	function initWindInfobox(map) {
+		for (var i = 0; i < monitorInfo.length; i++) {
+			var monitor = monitorInfo[i];
+
+			var myOptions = {
+				content : "0.0" + "m/s",
+				boxStyle : {
+					border : "none",
+					textAlign : "center",
+					fontSize : "12pt",
+					color : "Red",
+					width : "60px"
+				},
+				disableAutoPan : true,
+				pixelOffset : new google.maps.Size(20, -10),
+				position : new google.maps.LatLng(monitor.lat, monitor.lng),
+				closeBoxURL : "",
+				visible : false,
+				pane : "mapPane",
+				enableEventPropagation : true
+			};
+
+			var ibLabel = new InfoBox(myOptions);
+			windInfoboxArray.push(ibLabel);
+			ibLabel.open(map);
+		}
+	}
+
+	function initLableInfobox(map) {
+		for (var i = 0; i < monitorInfo.length; i++) {
+			var monitor = monitorInfo[i];
+
+			var myOptions = {
+				content : "<strong>" + monitor.name + "</strong>",
+				boxStyle : {
+					border : "none",
+					textAlign : "center",
+					fontSize : "14pt",
+					width : "60px"
+				},
+				disableAutoPan : true,
+				pixelOffset : new google.maps.Size(-30, 10),
+				position : new google.maps.LatLng(monitor.lat, monitor.lng),
+				closeBoxURL : "",
+				isHidden : false,
+				pane : "mapPane",
+				enableEventPropagation : true
+			};
+
+			var ibLabel = new InfoBox(myOptions);
+			ibLabel.open(map);
+		}
+	}
+
+	function getRealtimChart(id, monitorType) {
+		$.ajax({
+			url : "/JSON/realtimeHighchart/" + monitorType,
+			data : "",
+			contentType : "application/json; charset=utf-8",
+			type : "GET",
+			dataType : "json",
+			success : function(result) {
+				result.colors = [ '#7CB5EC', '#434348', '#90ED7D', '#F7A35C',
+						'#8085E9', '#F15C80', '#E4D354', '#2B908F', '#FB9FA8',
+						'#91E8E1', '#7CB5EC', '#80C535', '#969696' ];
+				result.tooltip = {
+					valueDecimals : 2
+				};
+				result.legend = {
+					enabled : false
+				};
+				result.title = {
+					text : null
+				};
+				result.credits = {
+					enabled : false,
+					href : 'http://www.wecc.com.tw/'
+				};
+				
+				result.navigation={
+		            buttonOptions: {
+		                enabled: false
+		            }
+		        };
+				result.xAxis.type = "datetime";
+				result.xAxis.dateTimeLabelFormats = {
+						millisecond: '%b%e日 %H:%M',
+		            };
+					
+				result.chart.height = 200;
+				
+				$(id).highcharts(result);
+			},
+			error : function(xhr, status, errorThrown) {
+				console.log("錯誤訊息:" + status + "-" + errorThrown);
+			},
+
+			complete : function(xhr, status) {
+
+			}
+		});
+	}
+
+	function initRealtimeMap() {
+		var styles = [ {
+			featureType : "road",
+			elementType : "geometry",
+			stylers : [ {
+				lightness : 100
+			}, {
+				visibility : "simplified"
+			} ]
+		}, {
+			featureType : "road",
+			elementType : "labels",
+			stylers : [ {
+				visibility : "off"
+			} ]
+		} ];
+
+		var mapOptions = {
+			center : mapCenter,
+			zoom : 11,
+			panControl : false,
+			zoomControl : false,
+			scaleControl : true,
+			styles : styles,
+			mapTypeId : google.maps.MapTypeId.ROADMAP
+		};
+		var map = new google.maps.Map(document.getElementById("realtimeMap"),
+				mapOptions);
+
+		// Create the DIV to hold the control and call the HomeControl()
+		// constructor passing in this DIV.
+		var homeControlDiv = document.createElement('div');
+		var homeControl = new HomeControl(map, homeControlDiv, mapCenter);
+
+		homeControlDiv.index = 1;
+		map.controls[google.maps.ControlPosition.TOP_LEFT].push(homeControlDiv);
+
+		initMonitorMarker(map);
+		initWindMarker(map);
+		initLableInfobox(map);
+		initWindInfobox(map);
+	};
+
+	function refreshInfo() {
+		refreshRealtimeChart();
+		refreshRealtimeInfo();
+	}
+
+	function initRealtime() {
+		initRealtimeMap();
+		//refresh info every min
+		refreshInfo();
+		//myInterval = setInterval(refreshInfo, 60 * 1000);
+	}
+
+	$(document).ready(initRealtime());
+</script>

@@ -1,0 +1,183 @@
+@* userManagement Template File *@
+@import controllers.Security._
+@(userInfo: controllers.Security.UserInfo, user:User, userList:List[User])
+<div class="row" ng-controller="userCtrl as ctrl">
+	<div class="col-lg-12">
+		<div class="ibox float-e-margins">
+<div class="ibox-content">
+<ul class="nav nav-tabs">
+<li>
+	<a data-toggle="tab" data-target="#newUser"> <span class="glyphicons glyphicons-hotspot"></span>新增使用者</a>
+</li>
+<li>
+	<a data-toggle="tab" data-target="#deleteUser" id='deleteUsrTab'> <span class="glyphicons glyphicons-hotspot"></span>刪除使用者</a>
+</li>
+<li class="active">
+	<a data-toggle="tab" data-target="#updateUser" id='updateUsrTab'> <span class="glyphicons glyphicons-hotspot"></span>更新使用者資料</a>
+</li>
+</ul>
+<div class="tab-content">
+<div id="newUser" class="tab-pane" align="left">
+<br/>
+   		<form class="form-horizontal">
+            <div class="form-group">
+            	<label class="col-lg-2 control-label">登入電子信箱</label>
+                <div class="col-lg-10">
+                	<input name='email' type="email" placeholder="Email" class="form-control" 
+                	required ng-model="ctrl.user.email">
+                </div>
+            </div>
+            <div class="form-group"><label class="col-lg-2 control-label">密碼</label>
+                <div class="col-lg-5">
+                	<input name='password' type="password" placeholder="Password" class="form-control" 
+                	required ng-model="ctrl.user.password">
+                </div>
+            </div>
+            <div class="form-group"><label class="col-lg-2 control-label">密碼再輸入</label>
+                <div class="col-lg-5">
+                	<input name='password' type="password" placeholder="Password" class="form-control" 
+                	required ng-model="ctrl.user.passwordRetype">
+                </div>
+            </div>
+            <div class="form-group">
+            	<label class="col-lg-2 control-label">顯示名稱</label>
+                <div class="col-lg-5">
+                	<input name='name' type="text" placeholder="姓名" class="form-control" 
+                	required ng-model="ctrl.user.name">
+                </div>
+            </div>
+            <div class="form-group">
+            	<label class="col-lg-2 control-label">行動電話</label>
+                <div class="col-lg-5">
+                	<input name='phone' type="tel" placeholder="電話號碼" class="form-control" 
+                	required ng-model="ctrl.user.phone">
+                </div>
+            </div>
+            <div class="form-group">
+            	<label class="col-lg-2 control-label">系統管理員</label>
+                <div class="col-lg-5">
+                	<input name='admin' type="checkbox" class="form-control" 
+                	ng-model="ctrl.user.isAdmin">
+                </div>
+            </div>
+            <div class="form-group">
+	    		<label class="col-lg-2 control-label">群組:</label>
+	        		<div class="col-lg-5">
+	        		<div class="btn-group">	            				            				
+	            	<label class="btn btn-outline btn-primary" ng-model="$parent.userGroup" 
+	            		ng-repeat="group in ctrl.groupList"  uib-btn-radio="group">{{group._id}}</label>	            			
+	            	</div>
+	        		</div>	            			            		
+	    	</div>
+            <div class="form-group">
+                <div class="col-lg-offset-2 col-lg-10">
+                    <button class="btn btn-primary" type="submit" ng-click="ctrl.newUser()" ng-disabled="!ctrl.userReady()">新增</button>
+                </div>
+            </div>
+        </form>
+</div>
+<div id="deleteUser" class="tab-pane" align="left">
+<br/>
+	<form class="form-horizontal">
+		<div class="form-group">
+	    	<label class="col-lg-2 control-label">使用者:</label>
+	        	<div class="col-lg-10">
+	        	<div class="btn-group">	            				            				
+	            <label class="btn btn-outline btn-primary" ng-model="$parent.selectedUser" 
+	            	ng-repeat="user in ctrl.userList"  uib-btn-radio="user">{{user.name}}-{{user.email}}</label>	            			
+	            </div>
+	        	</div>	            			            		
+	    </div>
+    	<div class="form-group">
+        	<div class="col-lg-offset-2 col-lg-10">
+            	<button class="btn btn-primary" type="submit" ng-click="ctrl.deleteUser()" 
+            	 ng-disabled="!selectedUser">刪除</button>
+            </div>
+        </div>
+	</form>
+</div>
+<div id="updateUser" class="tab-pane active" align="left">
+<br/>
+   		<form id="updateUser" class="form-horizontal">
+   			<div class="form-group">
+	    		<label class="col-lg-2 control-label">使用者:</label>
+	        		<div class="col-lg-10">
+	        		<div class="btn-group">	            				            				
+	            	<label class="btn btn-outline btn-primary" ng-model="$parent.selectedUser" ng-change="ctrl.copyUser()" 
+	            		ng-repeat="user in ctrl.userList"  uib-btn-radio="user">{{user.name}}-{{user.email}}</label>	            			
+	            	</div>
+	        		</div>	            			            		
+	    	</div>
+   		<div ng-show="ctrl.displayUser">	   			
+            <div class="form-group"><label class="col-lg-2 control-label">密碼</label>
+                <div class="col-lg-5">
+                	<input name='password' type="password" placeholder="Password" class="form-control" 
+                	required ng-model="ctrl.user.password">
+                </div>
+            </div>
+            <div class="form-group"><label class="col-lg-2 control-label">密碼再輸入</label>
+                <div class="col-lg-5">
+                	<input name='password' type="password" placeholder="Password" class="form-control" 
+                	required ng-model="ctrl.user.passwordRetype">
+                </div>
+            </div>
+            <div class="form-group">
+            	<label class="col-lg-2 control-label">顯示名稱</label>
+                <div class="col-lg-5">
+                	<input name='name' type="text" placeholder="姓名" class="form-control" 
+                	required ng-model="ctrl.user.name">
+                </div>
+            </div>
+            <div class="form-group">
+            	<label class="col-lg-2 control-label">行動電話</label>
+                <div class="col-lg-5">
+                	<input name='phone' type="tel" placeholder="電話號碼" class="form-control" 
+                	required ng-model="ctrl.user.phone">
+                </div>
+                <button class="btn btn-primary" ng-click="ctrl.testSMS()" ng-enable="ctrl.user.phone">測試簡訊</button>
+            </div>
+            <div class="form-group">
+            	<label class="col-lg-2 control-label">系統管理員</label>
+                <div class="col-lg-5">
+                	<input name='admin' type="checkbox" class="form-control" 
+                	ng-model="ctrl.user.isAdmin">
+                </div>
+            </div>
+            <div class="form-group">
+	    		<label class="col-lg-2 control-label">群組:</label>
+	        		<div class="col-lg-5">
+	        		<div class="btn-group">	            				            				
+	            	<label class="btn btn-outline btn-primary" ng-model="$parent.userGroup" 
+	            		ng-repeat="group in ctrl.groupList"  uib-btn-radio="group">{{group._id}}</label>	            			
+	            	</div>
+	        		</div>	            			            		
+	    	</div>
+            <div class="form-group">
+            	<label class="col-lg-2 control-label">警報通知</label>
+                <div class="col-lg-5">
+                	<input name='admin' type="checkbox" class="form-control" 
+                	ng-model="ctrl.user.alarmConfig.enable">
+                </div>
+            </div>
+            <div class="form-group">
+	    		<label class="col-lg-2 control-label">即時畫面控制項:</label>
+	        		<div class="col-lg-10">
+	        		<div class="btn-group">	            				            				
+	            	<label class="btn btn-outline btn-primary" ng-model="$parent.widgets[mt._id]" 
+	            		ng-repeat="mt in ctrl.monitorTypeList"  uib-btn-checkbox>{{mt.desp}}</label>	            			
+	            	</div>
+	        		</div>	            			            		
+	    	</div>
+           <div class="form-group">
+                <div class="col-lg-offset-2 col-lg-10">
+                    <button class="btn btn-primary" type="submit" ng-disabled="!ctrl.userReady()" ng-click="ctrl.updateUser()">更新</button>
+                </div>
+            </div>
+        </div>
+        </form>
+</div>
+</div>
+</div>
+</div>                   
+</div>
+</div>

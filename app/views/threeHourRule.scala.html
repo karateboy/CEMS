@@ -1,0 +1,115 @@
+@* threeHourRule Template File *@
+<div id="threeHourRule" class="tab-pane" align="left">
+	<br/>
+	<h3>說明:</h3>
+	<p>連續三小時測值差距如超過系統設定之絕對值及比例, 該測項小時值註記為異常值</p>
+	<form id="threeHourForm" class="form-horizontal">	
+		<div class="form-group">
+			<label class="col-lg-1 control-label">啟用</label>
+        	<div class="col-lg-1">        		
+            	<input type="checkbox" name="enabled" class="form-control">
+            </div>
+        </div>
+        <div id='threeHourParameter'>        
+        <table class="table">
+        	<thead>
+        		<tr>
+        			<th>測項</th>
+        			<th>絕對值</th>
+        			<th>比例</th>
+        		</tr>
+        	</thead>
+        	<tbody>
+        		@for(mt<-MonitorType.mtvList){
+        			<tr>
+        				<th><input type="checkbox" name="monitorType" id='@mt' disabled>@MonitorType.map(mt).desp</th>
+        				<td><input name="absValue" id='@mt' value='10' disabled></td>
+        				<td><input name="percentValue" id='@mt' value='50' disabled>%</td>
+        			</tr>
+        		}
+        	</tbody>
+        </table>
+        </div>
+		<div class="form-group">
+        	<div class="col-lg-offset-2 col-lg-10">
+            	<button class="btn btn-primary" type="submit">確認</button>
+            </div>
+        </div>
+	</form>    
+</div>
+<script>
+
+</script>
+<script>
+function updatethreeHourForm (){
+	var config = auditConfig.threeHourRule;
+	var $enabled = $('#threeHourForm :input[name="enabled"]');
+	$enabled.prop('checked', config.enabled);
+	
+	var $inputs = $('#threeHourParameter :input');
+	function findthreeHourCfg(array, id){
+		for(var i=0;i<array.length;i++){
+			if(array[i].id == id)
+				return array[i]
+		}
+
+		return null;				
+	}
+	
+	for(var i=0;i<$inputs.length;i++){
+		var $input = $inputs.eq(i);
+		$input.prop('disabled', !config.enabled);
+		if($input.prop('type') == 'checkbox'){
+			var id = $input.prop('id');
+			var mt = findthreeHourCfg(config.monitorTypes, id);
+			if(mt != null){
+				$input.prop('checked', true);
+				var $abs = $input.parent().next().children();
+				$abs.val(mt.abs.toFixed(2));
+				var $percent = $abs.parent().next().children();
+				$percent.val(mt.percent.toFixed(2));
+			}else{
+				$input.prop('checked', false);
+				var $abs = $input.parent().next().children();
+				$abs.val(10);
+				var $percent = $abs.parent().next().children();
+				$percent.val(10);
+			}				
+		}
+	}
+}
+
+$('#threeHourForm :input[name="enabled"]').click(function(){
+	var $me=$(this);
+	var $inputs = $('#threeHourParameter :input');
+	var disabled = !$me.prop('checked'); 
+	for(var i=0;i<$inputs.length;i++){
+		var $check = $inputs.eq(i);
+		$check.prop("disabled", disabled);
+	}
+});
+
+$('#threeHourForm').submit(function(){
+	var param={};
+	var $enabled = $('#threeHourForm :input[name="enabled"]')
+	var $inputs = $('#threeHourParameter :input');
+	param.enabled = $enabled.prop("checked");
+	param.monitorTypes=[];
+	for(var i=0;i<$inputs.length;i++){
+		var $check = $inputs.eq(i);
+		if($check.prop("checked")){				
+			var mt={};
+			mt.id = $check.prop('id');
+			var $abs = $check.parent().next().children();				
+			mt.abs = parseFloat($abs.val());
+			var $percent = $abs.parent().next().children();
+			mt.percent = parseFloat($percent.val());
+			param.monitorTypes.push(mt);
+		}
+	}
+	auditConfig.threeHourRule = param;
+	postAuditCfg();
+	event.preventDefault();
+});
+
+</script>

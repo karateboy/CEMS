@@ -1,0 +1,61 @@
+@* persistenceRule Template File *@
+<div id="dataReadyMinRule" class="tab-pane" align="left">
+	<br/>
+	<h3>說明:</h3>
+	<p>分鐘值資料回傳檢查</p>
+	<form id="dataReadyMinForm" class="form-horizontal">
+        <div class="form-group">
+			<label class="col-lg-1 control-label">啟用</label>
+        	<div class="col-lg-1">        		
+            	<input type="checkbox" name="enabled" class="form-control">
+            </div>
+        </div>
+		<div id='dataReadyMinParameter' class="form-group">
+        	<label class="col-lg-1 control-label">分鐘</label>
+            <div class="col-lg-10">
+            	<input name='overdue' type="number" class="form-control" value='10' disabled>
+            </div>
+        </div>
+	
+		<div class="form-group">
+        	<div class="col-lg-offset-2 col-lg-10">
+            	<button class="btn btn-primary" type="submit">確認</button>
+            </div>
+        </div>
+	</form>
+</div>
+<script>
+function updateDataReadyMinForm(){
+	var config = auditConfig.dataReadyMinRule;
+	if(config == null)
+		return;
+	
+	var $enabled = $('#dataReadyMinForm :input[name="enabled"]');
+	$enabled.prop('checked', config.enabled);
+	var $overdue = $('#dataReadyMinForm :input[name="overdue"]');
+	$overdue.val(config.overdue);
+	$overdue.prop('disabled', !config.enabled);
+}
+
+$('#dataReadyMinForm :input[name="enabled"]').click(function(){
+	var $me=$(this);
+	var $inputs = $('#dataReadyMinParameter :input');
+	var disabled = !$me.prop('checked'); 
+	for(var i=0;i<$inputs.length;i++){
+		var $check = $inputs.eq(i);
+		$check.prop("disabled", disabled);
+	}
+});
+$('#dataReadyMinForm').submit(function(){
+	var param={};
+	var $enabled = $('#dataReadyMinForm :input[name="enabled"]');
+	var $overdue = $('#dataReadyMinForm :input[name="overdue"]');
+	param.enabled = $enabled.prop("checked");
+	param.overdue = parseInt($overdue.val()); 
+	
+	auditConfig.dataReadyMinRule = param;
+	postAuditCfg();
+	event.preventDefault();
+});
+
+</script>

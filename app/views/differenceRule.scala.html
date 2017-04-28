@@ -1,0 +1,95 @@
+@* differceRule Template File *@
+<div id="differenceRule" class="tab-pane" align="left">
+	<br/>
+	<h3>說明:</h3>
+	<p>(測值-平均值)>?倍標準差</p>
+	<form id="differenceForm" class="form-horizontal">
+        <div class="form-group">
+			<label class="col-lg-1 control-label">啟用</label>
+        	<div class="col-lg-1">        		
+            	<input type="checkbox" name="enabled" class="form-control">
+            </div>
+        </div>
+	    <div id='differenceParameter'>
+        	<label class="col-lg-1 control-label">超過標準差倍數</label>
+            <div class="col-lg-10">
+            	<input name='multiplier' type="number" class="form-control" value='3' disabled>
+            </div>
+            <div>
+            	<table class="table">
+        		<thead>
+        			<tr>
+        				<th>測項</th>
+        			</tr>
+        		</thead>
+        		<tbody>
+        			@for(mt<-MonitorType.mtvList){
+        				<tr>
+        					<th><input type="checkbox" name="monitorType" id='@mt' disabled>@MonitorType.map(mt).desp</th>
+        				</tr>
+        			}
+        		</tbody>
+        		</table>
+        	</div>
+        </div>
+	
+		<div class="form-group">
+        	<div class="col-lg-offset-2 col-lg-10">
+            	<button class="btn btn-primary" type="submit">確認</button>
+            </div>
+        </div>
+	</form>
+</div>
+<script>
+function updateDifferenceForm(){
+	var config = auditConfig.differenceRule;
+	var $enabled = $('#differenceForm :input[name="enabled"]');
+	$enabled.prop('checked', config.enabled);
+	var $multiplier = $('#differenceForm :input[name="multiplier"]')
+	$multiplier.val(config.multiplier.toFixed(2));
+	$multiplier.prop("disabled", !config.enabled);
+	var $inputs = $('#differenceForm :input[name="monitorType"]');
+	for(var i=0;i<$inputs.length;i++){
+		var $check = $inputs.eq(i);
+		if(config.monitorTypes.indexOf($check.prop('id')) != -1)
+			$check.prop('checked', true);
+		else
+			$check.prop('checked', false);
+		
+		$check.prop("disabled", !config.enabled);
+	}			
+}
+
+$('#differenceForm :input[name="enabled"]').click(function(){
+	var $me=$(this);
+	var $inputs = $('#differenceParameter :input');
+	var disabled = !$me.prop('checked'); 
+	for(var i=0;i<$inputs.length;i++){
+		var $check = $inputs.eq(i);
+		$check.prop("disabled", disabled);
+	}
+});
+
+$('#differenceForm').submit(function(){
+	var param={};
+	var $enabled = $('#differenceForm :input[name="enabled"]')
+	var $multiplier = $('#differenceForm :input[name="multiplier"]')
+	
+	var $inputs = $('#differenceForm :input[name="monitorType"]');
+	param.enabled = $enabled.prop("checked");
+	param.multiplier = parseFloat($multiplier.val());
+	
+	param.monitorTypes=[];
+	for(var i=0;i<$inputs.length;i++){
+		var $check = $inputs.eq(i);
+		if($check.prop("checked")){				
+			param.monitorTypes.push($check.prop('id'));
+		}
+	}
+
+	auditConfig.differenceRule = param;
+	postAuditCfg();
+	event.preventDefault();
+});
+
+</script>

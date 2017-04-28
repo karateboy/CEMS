@@ -1,0 +1,72 @@
+@* monthlyReport Template File *@
+@import com.github.nscala_time.time.Imports._
+@import MonitorStatus._
+@(monitor:Monitor.Value, reportDate:DateTime, mTypes:List[MonitorType.Value], mtTimeStatMap: Map[MonitorType.Value, Map[DateTime, Stat]], statMap: Map[MonitorType.Value, Stat])
+<h3>@(Monitor.map(monitor).indParkName + Monitor.map(monitor).dp_no)監測年報表</h3>
+<h4>日期:@reportDate.toString("yyyy年")</h4>
+@reportLegend("")
+<table id="reportTable" class="table table-bordered" cellspacing="0" width="100%">
+	<thead>
+		<tr>
+			<th>月份</th>
+			@for(mt<-mTypes){
+			<th>@MonitorType.map(mt).desp</th>
+			}
+		</tr>
+	</thead>
+	<tfoot>
+		<tr>
+			<th>平均</th>
+			@for(mt<-mTypes){
+				<th>@MonitorType.format(mt, statMap(mt).avg)</th>
+			}
+		</tr>
+		<tr>
+			<th>最大</th>
+			@for(mt<-mTypes){
+				<th>@MonitorType.format(mt, statMap(mt).max)</th>
+			}
+		</tr>
+		<tr>
+			<th>最小</th>
+			@for(mt<-mTypes){
+				<th>@MonitorType.format(mt, statMap(mt).min)</th>
+			}
+		</tr>
+		<tr>
+			<th>有效率(%)</th>
+			@for(mt<-mTypes){
+				<th>@MonitorType.format(mt, statMap(mt).effectPercent)</th>
+			}
+		</tr>
+	</tfoot>
+	<tbody>
+		@for(t<-Query.getPeriods(reportDate, reportDate + 1.year, 1.month)){
+			<tr>
+			<th>@t.toString("MM")月</th>
+			@for(mt<-mTypes){
+				<td 
+				@if(!mtTimeStatMap(mt)(t).isEffective){
+					class="normal abnormal_status text-center"
+				}
+
+				>@MonitorType.format(mt, mtTimeStatMap(mt)(t).avg)</td>
+			}
+			</tr>
+		}
+	</tbody>
+</table>
+<script>
+$(document).ready(function(){
+	var l10n_url = "/assets/localization/zh_tw.json";
+	
+	$('#reportTable').dataTable( {
+		responsive: true,
+		language: {
+			url: l10n_url,							
+		},
+		"paging":   false,
+		"searching": false
+	} );
+});		
+</script>
