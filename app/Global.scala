@@ -13,7 +13,7 @@ object Global extends GlobalSettings {
     MongoDB.init()
     DataCollectManager.startup
     
-    //DataReceiver.startup
+    DataReceiver.startup
   }
 
   override def onStop(app: Application) {

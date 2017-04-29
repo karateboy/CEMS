@@ -13,12 +13,14 @@ import models.ModelHelper._
 case class Monitor(_id: String, indParkName: String, dp_no: String,
                    lat: Option[Double] = None, lng: Option[Double] = None,
                    autoAudit: Option[AutoAudit] = None,
-                   head: Option[Long] = None, tail: Option[Long] = None) {
+                   head: Option[Long] = None, tail: Option[Long] = None,
+                   minHead: Option[Long] = None, minTail: Option[Long] = None) {
 
   def toDocument = {
     import AutoAudit._
     Document("_id" -> _id, "indParkName" -> indParkName, "dp_no" -> dp_no,
-      "lat" -> lat, "lng" -> lng, "autoAudit" -> autoAudit, "head" -> head, "tail" -> tail)
+      "lat" -> lat, "lng" -> lng, "autoAudit" -> autoAudit, "head" -> head, "tail" -> tail,
+      "minHead" -> minHead, "minTail" -> minTail)
   }
 
   def getPlantID = {
@@ -31,27 +33,23 @@ case class Monitor(_id: String, indParkName: String, dp_no: String,
     (ids(0), ids(1))
   }
 
-  def getTailDate = {
-    val millis = tail.getOrElse(
-      {
-        if (DateTime.now().getHourOfDay < 12)
-          DateTime.yesterday().withMillisOfDay(0).getMillis
-        else
-          DateTime.now().withMillisOfDay(0).getMillis
-      })
-    (new DateTime(millis) - 1.day).toLocalDate()
-  }
+  def defaultTail =
+    if (DateTime.now().getHourOfDay < 12)
+      DateTime.yesterday().withMillisOfDay(0).getMillis
+    else
+      DateTime.now().withMillisOfDay(0).getMillis
 
-  def getHeadDate = {
-    val millis = head.getOrElse(
-      {
-        if (DateTime.now().getHourOfDay < 12)
-          DateTime.yesterday().withMillisOfDay(0).getMillis
-        else
-          DateTime.now().withMillisOfDay(0).getMillis
-      })
-    (new DateTime(millis) + 1.day).toLocalDate()
-  }
+  def defaultHead =
+    if (DateTime.now().getHourOfDay < 12)
+      DateTime.yesterday().withMillisOfDay(0).getMillis
+    else
+      DateTime.now().withMillisOfDay(0).getMillis
+
+  def getTailDate = (new DateTime(tail.getOrElse(defaultTail)) - 1.day).toLocalDate()
+  def getHeadDate = (new DateTime(head.getOrElse(defaultHead)) + 1.day).toLocalDate()
+
+  def getMinTailDate = (new DateTime(minTail.getOrElse(DateTime.now().withMillisOfDay(0).getMillis)) - 1.day).toLocalDate()
+  def getMinHeadDate = (new DateTime(minHead.getOrElse(DateTime.yesterday().withMillisOfDay(0).getMillis)) + 1.day).toLocalDate()
 
 }
 
@@ -124,9 +122,11 @@ object Monitor extends Enumeration {
     val autoAudit = getOptionDoc("autoAudit") map { d => AutoAudit.toAutoAudit(d) }
     val head = getOptionLong("head")
     val tail = getOptionLong("tail")
+    val minHead = getOptionLong("minHead")
+    val minTail = getOptionLong("minTail")
 
     Monitor(_id = _id, indParkName = indParkName, dp_no = dp_no, lat = lat, lng = lng,
-      autoAudit = autoAudit, head = head, tail = tail)
+      autoAudit = autoAudit, head = head, tail = tail, minHead = minHead, minTail = minTail)
   }
 
   def newMonitor(m: Monitor) = {
@@ -213,7 +213,7 @@ object Monitor extends Enumeration {
     import org.mongodb.scala.model.Updates._
     import org.mongodb.scala.model.FindOneAndUpdateOptions
 
-    assert(colname == "head" || colname == "tail")
+    assert(colname == "head" || colname == "tail" || colname == "minHead" || colname == "minTail")
 
     val idFilter = equal("_id", map(m)._id)
     val opt = FindOneAndUpdateOptions().returnDocument(com.mongodb.client.model.ReturnDocument.AFTER)
@@ -228,6 +228,8 @@ object Monitor extends Enumeration {
 
   def updateHead(m: Monitor.Value, newValue: Long) = updateRecord(m, "head", newValue)
   def updateTail(m: Monitor.Value, newValue: Long) = updateRecord(m, "tail", newValue)
+  def updateMinHead(m: Monitor.Value, newValue: Long) = updateRecord(m, "minHead", newValue)
+  def updateMinTail(m: Monitor.Value, newValue: Long) = updateRecord(m, "minTail", newValue)
 
   def updateMonitorAutoAudit(m: Monitor.Value, autoAudit: AutoAudit) = {
     import org.mongodb.scala._

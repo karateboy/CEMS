@@ -22,6 +22,7 @@ object DataReceiver {
     val timer = {
       import scala.concurrent.duration._
       Akka.system.scheduler.schedule(Duration(5, SECONDS), Duration(1, MINUTES), receiver, GetHistoryData)
+      Akka.system.scheduler.schedule(Duration(5, SECONDS), Duration(6, MINUTES), receiver, GetRealtimeData)
     }
   }
 
@@ -39,10 +40,18 @@ class DataReceiver extends Actor with ActorLogging {
     case GetHistoryData =>
       try {
         getHistoryData()
-        Logger.info("GetHistoryData done.")
+        Logger.info("getHistoryData done")
       } catch {
         case ex: Throwable =>
-          Logger.error("GetRealtimeData failed", ex)
+          Logger.error("getHistoryData failed", ex)
+      }
+    case GetRealtimeData =>
+      try {
+        getRealtimeData()
+        Logger.info("getRealtimeData done")
+      } catch {
+        case ex: Throwable =>
+          Logger.error("getRealtimeData failed", ex)
       }
   }
 
@@ -53,19 +62,20 @@ class DataReceiver extends Actor with ActorLogging {
     implicit val pipeRead = Json.reads[PipeData]
     import models.ModelHelper._
 
-    def growData(isHead: Boolean) = {
+    def getHourData(fromHead: Boolean) = {
       for {
         m <- Monitor.mvList
         monitor = Monitor.map(m)
         (plantID, pipeID) = monitor.getIDs
       } {
-        val date = if (isHead)
+        val date = if (fromHead)
           monitor.getHeadDate
         else
           monitor.getTailDate
 
-        if (DateTime.now().toLocalDate() > date) {
+        if (DateTime.now() > date.toDateTime(LocalTime.parse("11:00")) + 1.day) {
           val dateStr = date.toString("YYYYMMdd")
+          Logger.debug(s"getHourData:$fromHead=>${monitor.indParkName}${monitor.dp_no} $dateStr")
           val url = s"http://cems.ilepb.gov.tw/OpenData/API/Daily/${plantID}/${pipeID}/${dateStr}/Json"
           val f = WS.url(url).get().map {
             response =>
@@ -75,7 +85,7 @@ class DataReceiver extends Actor with ActorLogging {
                   Logger.error(JsError.toJson(error).toString())
                 },
                 pipeDataSeq => {
-                  processData(m, date, pipeDataSeq, isHead)
+                  processData(m, date, pipeDataSeq, fromHead)(Record.HourCollection, Monitor.updateHead, Monitor.updateTail)
                 })
           }
           f onFailure {
@@ -88,12 +98,68 @@ class DataReceiver extends Actor with ActorLogging {
     }
 
     //Grow tail...
-    growData(false)
+    getHourData(false)
     //Grow head...
-    growData(true)
+    getHourData(true)
   }
 
-  def processData(m: Monitor.Value, day: LocalDate, pipeDataSeq: Seq[PipeData], isHead: Boolean) = {
+  def getRealtimeData() {
+    import play.api.libs.ws.WS
+    import play.api.libs.json._
+    implicit val mtDataRead = Json.reads[MonitorTypeData]
+    implicit val pipeRead = Json.reads[PipeData]
+    import models.ModelHelper._
+
+    def getMinData(fromHead: Boolean) = {
+      for {
+        m <- Monitor.mvList
+        monitor = Monitor.map(m)
+        (plantID, pipeID) = monitor.getIDs
+      } {
+        val date = if (fromHead) {
+          val headDate = monitor.getMinHeadDate
+          if (headDate > DateTime.now().toLocalDate())
+            DateTime.now().toLocalDate()
+          else
+            headDate
+        } else
+          monitor.getMinTailDate
+
+        if (DateTime.now().toLocalDate() >= date) {
+          val dateStr = date.toString("YYYYMMdd")
+          Logger.debug(s"getMinData:$fromHead=>${monitor.indParkName}${monitor.dp_no} $dateStr")
+          val url = s"http://cems.ilepb.gov.tw/OpenData/API/RealTime/${plantID}/${pipeID}/${dateStr}/Json"
+          val f = WS.url(url).get().map {
+            response =>
+              val result = response.json.validate[Seq[PipeData]]
+              result.fold(
+                error => {
+                  Logger.error(JsError.toJson(error).toString())
+                },
+                pipeDataSeq => {
+                  processData(m, date, pipeDataSeq, fromHead)(Record.MinCollection, Monitor.updateMinHead, Monitor.updateMinTail)
+                })
+          }
+          f onFailure {
+            case ex: Throwable =>
+              ModelHelper.logException(ex)
+          }
+          waitReadyResult(f)
+        }
+      }
+    }
+
+    //Grow tail...
+    getMinData(false)
+    //Grow head...
+    getMinData(true)
+  }
+
+  def processData(m: Monitor.Value, day: LocalDate,
+                  pipeDataSeq: Seq[PipeData],
+                  isHead: Boolean)(collection: String,
+                                   updateHead: (Monitor.Value, Long) => Unit,
+                                   updateTail: (Monitor.Value, Long) => Unit) = {
     def toMonitorType(code: String) = {
       code match {
         case "11" =>
@@ -123,7 +189,9 @@ class DataReceiver extends Actor with ActorLogging {
     }
 
     import scala.collection.mutable.Map
+    import scala.collection.mutable.Queue
     val recordMap = Map.empty[Monitor.Value, Map[DateTime, Map[MonitorType.Value, (Double, String)]]]
+    val exRecordMap = Map.empty[Monitor.Value, Map[DateTime, Map[MonitorType.Value, Queue[(Double, String)]]]]
 
     for (pipeData <- pipeDataSeq) {
       val monitor = Monitor.withName(Monitor.monitorId(pipeData.CNO, pipeData.POLNO))
@@ -153,32 +221,85 @@ class DataReceiver extends Actor with ActorLogging {
             0.0
         }
 
-        mtMap.put(monitorType, (mtValue, status))
+        if (collection == Record.HourCollection && current.getMinuteOfHour != 0) {
+          val exTimeMap = exRecordMap.getOrElseUpdate(monitor, Map.empty[DateTime, Map[MonitorType.Value, Queue[(Double, String)]]])
+          val hourTime = current.withMinuteOfHour(0)
+          val exMtMap = exTimeMap.getOrElseUpdate(hourTime, Map.empty[MonitorType.Value, Queue[(Double, String)]])
+          val exQueue = exMtMap.getOrElse(monitorType, Queue.empty[(Double, String)])
+          exQueue.enqueue((mtValue, status))
+        } else
+          mtMap.put(monitorType, (mtValue, status))
       }
     }
 
+    //avg excluded
+    for {
+      (monitor, timeMaps) <- exRecordMap
+      (dateTime, mtMap) <- timeMaps
+      (mt, queue) <- mtMap
+    } {
+      val hourValue = recordMap(monitor)(dateTime)(mt)
+      queue.enqueue(hourValue)
+      val statusMap = Map.empty[String, Queue[Double]]
+      for (elm <- queue) {
+        val statusQ = statusMap.getOrElseUpdate(elm._2, Queue.empty[Double])
+        statusQ.enqueue(elm._1)
+      }
+      val statusKV = {
+        val kv = statusMap.maxBy(kv => kv._2.length)
+        if (kv._1 == MonitorStatus.NormalStat &&
+          statusMap(kv._1).size < statusMap.size * 0.75) {
+          //return most status except normal
+          val noNormalStatusMap = statusMap - kv._1
+          noNormalStatusMap.maxBy(kv => kv._2.length)
+        } else
+          kv
+      }
+      val values = statusKV._2
+      val avg =
+        values.sum / values.length
+      recordMap(monitor)(dateTime).put(mt, (avg, statusKV._1))
+    }
+
+    val latestMapOpt =
+      if (isHead) {
+        val f = Record.getLatestRecordMapFuture(collection)
+        val latestRecordMap = ModelHelper.waitReadyResult(f)
+        val latestMap = latestRecordMap map { x => x._1 -> x._2._1 }
+        Some(latestMap)
+      } else
+        None
+
     val docs =
       for {
-        monitorMap <- recordMap
-        monitor = monitorMap._1
-        timeMaps = monitorMap._2
-        dateTime <- timeMaps.keys.toList.sorted
+        (monitor, timeMaps) <- recordMap
+        filteredTimeMap = timeMaps.filter { tm =>
+          if (latestMapOpt.isDefined) {
+            val latestMap = latestMapOpt.get
+            if (latestMap.contains(monitor)) {
+              tm._1 > latestMap(monitor)
+            } else
+              true
+          } else
+            true
+        }
+        dateTime <- filteredTimeMap.keys.toList.sorted
         mtMaps = timeMaps(dateTime) if !mtMaps.isEmpty
       } yield {
         Record.toDocument(monitor, dateTime, mtMaps.toList)
       }
 
     if (!docs.isEmpty) {
-      val f = Record.insertRecords(docs.toSeq)(Record.MinCollection)
+      val f = Record.insertRecords(docs.toSeq)(collection)
       f.onSuccess({
         case x =>
           val millis = day.toDateTimeAtStartOfDay().getMillis
 
           for (m <- recordMap.keys) {
             if (isHead)
-              Monitor.updateHead(m, millis)
+              updateHead(m, millis)
             else
-              Monitor.updateTail(m, millis)
+              updateTail(m, millis)
 
             val mCase = Monitor.map(m)
             if (mCase.head.isEmpty)

@@ -36,10 +36,10 @@ function postAuditCfg(){
         		@for(m<-Monitor.mvList){
         			@if(m == Monitor.mvList.head){
         				<label class="btn btn-outline btn-primary dim active">
-        				<input type="radio" name="monitor" id="@Monitor.map(m)._id" checked>@Monitor.map(m).dp_no</label>	
+        				<input type="radio" name="monitor" id="@Monitor.map(m)._id" checked>@Monitor.map(m).indParkName@Monitor.map(m).dp_no</label>	
         			}else{
         				<label class="btn btn-outline btn-primary dim">
-        				<input type="radio" name="monitor" id="@Monitor.map(m)._id" checked>@Monitor.map(m).dp_no</label>
+        				<input type="radio" name="monitor" id="@Monitor.map(m)._id" checked>@Monitor.map(m).indParkName@Monitor.map(m).dp_no</label>
         			}        					
              	}
 			</div>

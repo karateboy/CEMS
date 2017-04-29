@@ -159,6 +159,10 @@ object MonitorStatus {
     }
   }
 
+  def isSuspended(s:String) = {
+    getTagInfo(SuspendStat) == getTagInfo(s)  
+  }
+  
   def isCalbration(s: String) = {
     val CALBRATION_STATS = List(ZeroCalibrationStat, SpanCalibrationStat, 
         CalibrationDeviation,CalibrationResume).map(getTagInfo)
@@ -182,6 +186,8 @@ object MonitorStatus {
           {
             if (isValid(tag))
               ""
+            else if (isSuspended(tag))
+              "suspend_status"
             else if (isCalbration(tag))
               "calibration_status"
             else if (isMaintenance(tag))

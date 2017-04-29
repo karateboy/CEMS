@@ -29,7 +29,8 @@ angular
 						'IndParkService',
 						'$scope',
 						'$http',
-						function($monitorType, $monitor, $indPark, $scope, $http) {
+						function($monitorType, $monitor, $indPark, $scope,
+								$http) {
 							var self = this;
 							self.monitorTypeList = $monitorType.query();
 							self.monitorList = $monitor.query();
@@ -37,10 +38,20 @@ angular
 							self.indParkMonitor = function(m) {
 								return (m.indParkName == $scope.selectedIndPark)
 							}
+							self.reportUnitList = [ {
+								id : 'SixMin',
+								desp : '6分'
+							}, {
+								id : 'FifteenMin',
+								desp : '15分'
+							}, {
+								id : 'Hour',
+								desp : '小時'
+							} ]
 
-							self.dateRangeStart = moment(23, "HH").subtract(2,
+							self.dateRangeStart = moment(0, "HH").subtract(2,
 									'days');
-							self.dateRangeEnd = moment(23, "HH");
+							self.dateRangeEnd = moment(0, "HH");
 
 							self.beforeRenderStartDate = function($view,
 									$dates, $leftDate, $upDate, $rightDate) {
@@ -70,35 +81,34 @@ angular
 							}
 
 							$scope.selectedMonitorId;
-							$scope.checkedMtId={};
-							$scope.selectedMtId = function(){
+							$scope.checkedMtId = {};
+							$scope.selectedMtId = function() {
 								var ret = [];
-								for (var prop in $scope.checkedMtId) {
-									if($scope.checkedMtId[prop])
+								for ( var prop in $scope.checkedMtId) {
+									if ($scope.checkedMtId[prop])
 										ret.push(prop);
 								}
 								return ret;
 							}
-							
-							$scope.selectedIndPark="";
+
+							$scope.selectedIndPark = "";
 
 							self.displayResult = false;
-							self.query = function() {								
-								var url = "/HistoryReport/" + encodeURIComponent($scope.selectedMonitorId) 
-										+ "/" + encodeURIComponent($scope.selectedMtId().join(':'))
-										+ "/min"
-										+ "/" + self.dateRangeStart.valueOf()
-										+ "/" + self.dateRangeEnd.valueOf();
+							self.query = function() {
+								var url = "/HistoryReport/"
+										+ encodeURIComponent($scope.selectedMonitorId)
+										+ "/"
+										+ encodeURIComponent($scope
+												.selectedMtId().join(':'))
+										+ "/" + $scope.selectedReportUnit + "/"
+										+ self.dateRangeStart.valueOf() + "/"
+										+ self.dateRangeEnd.valueOf();
 
-								$http
-										.get(url)
-										.then(
-												function(result) {
-													self.displayResult = true;
-													$('#reportDiv').html(result.data);
-												}, function(error) {
-												});
+								$http.get(url).then(function(result) {
+									self.displayResult = true;
+									$('#reportDiv').html(result.data);
+								}, function(error) {
+								});
 							}
-							
-							
+
 						} ]);

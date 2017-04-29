@@ -42,9 +42,9 @@ angular
 							self.indParkList = $indPark.query();
 							self.reportUnitList = $reportUnit.query();
 
-							self.dateRangeStart = moment(23, "HH").subtract(2,
+							self.dateRangeStart = moment(0, "HH").subtract(2,
 									'days');
-							self.dateRangeEnd = moment(23, "HH");
+							self.dateRangeEnd = moment(0, "HH");
 
 							self.beforeRenderStartDate = function($view,
 									$dates, $leftDate, $upDate, $rightDate) {

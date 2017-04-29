@@ -65,7 +65,7 @@ object Realtime extends Controller {
       import MonitorType._
       val user = request.user
       val userFuture = User.getUserByEmailFuture(user.id)
-      val latestRecordMap = Record.getLatestRecordMapFuture(Record.HourCollection)
+      val latestRecordMap = Record.getLatestRecordMapFuture(Record.MinCollection)
 
       for {
         userOpt <- User.getUserByEmailFuture(user.id) if userOpt.isDefined

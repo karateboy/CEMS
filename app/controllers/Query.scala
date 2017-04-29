@@ -22,22 +22,20 @@ case class Stat(
     count: Int,
     total: Int,
     overCount: Int,
-    hour_count:Option[Int]=None,
-    hour_total:Option[Int]=None
-) {
+    hour_count: Option[Int] = None,
+    hour_total: Option[Int] = None) {
   val effectPercent = {
     if (total > 0)
       Some(count.toDouble * 100 / total)
     else
       None
   }
-  
+
   val hourEffectPercent = {
-    for{
+    for {
       h_count <- hour_count
       h_total <- hour_total
-    }yield
-      h_count.toDouble*100/h_total
+    } yield h_count.toDouble * 100 / h_total
   }
 
   val isEffective = {
@@ -396,10 +394,9 @@ object Query extends Controller {
         import java.nio.file.Files
         def allMoniotorTypes = {
           val mts =
-          for(i <- 1 to monitors.length)yield
-           monitorTypes
-           
-          mts.flatMap { x => x }  
+            for (i <- 1 to monitors.length) yield monitorTypes
+
+          mts.flatMap { x => x }
         }
         val excelFile = ExcelUtility.exportChartData(chart, allMoniotorTypes.toArray)
         val downloadFileName =
@@ -421,7 +418,7 @@ object Query extends Controller {
       Ok(views.html.history())
   }
 
-  def historyReport(monitorStr: String, monitorTypeStr: String, tabTypeStr: String,
+  def historyReport(monitorStr: String, monitorTypeStr: String, reportUnitStr: String,
                     startLong: Long, endLong: Long) = Security.Authenticated {
     implicit request =>
       import scala.collection.JavaConverters._
@@ -429,15 +426,25 @@ object Query extends Controller {
 
       val monitorTypeStrArray = monitorTypeStr.split(':')
       val monitorTypes = monitorTypeStrArray.map { MonitorType.withName }
-      val tabType = TableType.withName(tabTypeStr)
+      val reportUnit = ReportUnit.withName(reportUnitStr)
       val (start, end) = (new DateTime(startLong), new DateTime(endLong))
 
-      val timeList = tabType match {
-        case TableType.hour =>
-          getPeriods(start, end, 1.hour)
-        case TableType.min =>
-          getPeriods(start, end, 1.minute)
-      }
+      val period: Period =
+        reportUnit match {
+          case ReportUnit.SixMin =>
+            6.minute
+          case ReportUnit.FifteenMin =>
+            15.minute
+          case ReportUnit.Hour =>
+            1.hour
+        }
+
+      val timeList = getPeriods(start, end, period)
+
+      val tabType = if (reportUnit == ReportUnit.Hour)
+        TableType.hour
+      else
+        TableType.min
 
       val recordMap = Record.getRecordMap(TableType.mapCollection(tabType))(monitorTypes.toList, monitor, start, end)
       val recordTimeMap = recordMap.map { p =>
@@ -458,11 +465,11 @@ object Query extends Controller {
     Ok(views.html.alarm())
   }
 
-  def alarmReport(monitorEncodedStr: String, monitorTypeEncodedStr:String, startStr: String, endStr: String) = Security.Authenticated {
+  def alarmReport(monitorEncodedStr: String, monitorTypeEncodedStr: String, startStr: String, endStr: String) = Security.Authenticated {
     val monitorStr = java.net.URLDecoder.decode(monitorEncodedStr, "UTF-8")
-    val monitors = monitorStr.split(":") map {Monitor.withName}
+    val monitors = monitorStr.split(":") map { Monitor.withName }
     val monitorTypeStr = java.net.URLDecoder.decode(monitorTypeEncodedStr, "UTF-8")
-    val monitorTypes = monitorTypeStr.split(":") map {MonitorType.withName}
+    val monitorTypes = monitorTypeStr.split(":") map { MonitorType.withName }
     val (start, end) =
       (new DateTime(startStr.toLong),
         new DateTime(endStr.toLong))
