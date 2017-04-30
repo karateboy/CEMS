@@ -1,6 +1,6 @@
 @* realtimeStatus Template File *@
 @import com.github.nscala_time.time.Imports._
-@(recordMap: Map[Monitor.Value, (DateTime, Map[MonitorType.Value, Record])], privilege: Privilege)
+@(recordMap: Map[MonitorType.Value, (DateTime, Map[Monitor.Value, Record])], privilege: Privilege)
 <div class="row">
 <div class="col-lg-12">
 <div class="ibox float-e-margins">
@@ -11,9 +11,14 @@
 				<tr>
 					<th>廠區</th>
 					<th>排放管道</th>
-					<th>資料時間</th>
-					@for(mt <- MonitorType.mtvList if privilege.allowedMonitorTypes.contains(mt)){
-						<th>@MonitorType.map(mt).desp</th>
+					@for(mt <- privilege.allowedMonitorTypes){
+						<th>@MonitorType.map(mt).desp 
+							@if(recordMap.contains(mt)){
+								(@recordMap(mt)._1.toString("HH:mm"))
+							}else{
+								(-)
+							}
+						</th>
 					}
 				</tr>
 			</thead>
@@ -22,16 +27,12 @@
 					<tr>
 						<th>@Monitor.map(m).indParkName</th>
 						<th>@Monitor.map(m).dp_no</th>
-						@if(!recordMap.contains(m)){
-							<th>-</th>
-							@for(mt <- MonitorType.mtvList  if privilege.allowedMonitorTypes.contains(mt)){
+						@for(mt <- privilege.allowedMonitorTypes){
+							@if(recordMap.contains(mt) && recordMap(mt)._2.contains(m)){
+								<td class="@MonitorType.getCssClassStr(mt, recordMap(mt)._2.get(m))">
+								@Html(MonitorType.formatRecord(mt, recordMap(mt)._2.get(m)))</td>
+							}else{
 								<td>-</td>
-							}
-						}else{
-							<th>@recordMap(m)._1.toString("HH:mm")</th>
-							@for(mt <- MonitorType.mtvList if privilege.allowedMonitorTypes.contains(mt)){								
-							<td class="@MonitorType.getCssClassStr(mt, recordMap(m)._2.get(mt))">
-								@Html(MonitorType.formatRecord(mt, recordMap(m)._2.get(mt)))</td>
 							}
 						}
 					</tr>

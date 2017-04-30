@@ -14,7 +14,8 @@ GET      /logout                                                              co
 POST     /authenticate                                                        controllers.Login.authenticate
 
 GET      /Dashboard                                                           controllers.Application.dashboard
-GET      /JSON/realtime/map                                                   controllers.Realtime.realtimeMap
+GET      /JSON/realtimeHighchart/:monitorType                                 controllers.Realtime.highchartJson(monitorType)	
+
 
 GET      /UserManagement                                                      controllers.Application.userManagement
 POST     /User                                                                controllers.Application.newUser

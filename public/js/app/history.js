@@ -45,6 +45,9 @@ angular
 								id : 'FifteenMin',
 								desp : '15分'
 							}, {
+								id : 'SixFifteenMin',
+								desp : '6/15分'
+							}, {
 								id : 'Hour',
 								desp : '小時'
 							} ]

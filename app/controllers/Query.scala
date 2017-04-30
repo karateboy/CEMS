@@ -253,11 +253,11 @@ object Query extends Controller {
       } yield {
         if (monitorTypes.length > 1 && monitorTypes.contains(windMtv)) {
           if (mt != windMtv)
-            seqData(s"${Monitor.map(m).dp_no}_${MonitorType.map(mt).desp}", timeData)
+            seqData(s"${Monitor.map(m).fullName}_${MonitorType.map(mt).desp}", timeData)
           else
-            seqData(s"${Monitor.map(m).dp_no}_${MonitorType.map(mt).desp}", timeData, 1, Some("scatter"))
+            seqData(s"${Monitor.map(m).fullName}_${MonitorType.map(mt).desp}", timeData, 1, Some("scatter"))
         } else {
-          seqData(s"${Monitor.map(m).dp_no}_${MonitorType.map(mt).desp}", timeData)
+          seqData(s"${Monitor.map(m).fullName}_${MonitorType.map(mt).desp}", timeData)
         }
       }
     }
@@ -429,17 +429,24 @@ object Query extends Controller {
       val reportUnit = ReportUnit.withName(reportUnitStr)
       val (start, end) = (new DateTime(startLong), new DateTime(endLong))
 
-      val period: Period =
-        reportUnit match {
-          case ReportUnit.SixMin =>
-            6.minute
-          case ReportUnit.FifteenMin =>
-            15.minute
-          case ReportUnit.Hour =>
-            1.hour
-        }
+      val timeList = if (reportUnit == ReportUnit.SixFifteenMin) {
+        var timeSet = Set.empty[DateTime] 
+        timeSet ++= getPeriods(start, end, 6.minute)
+        timeSet ++= getPeriods(start, end, 15.minute)
+        timeSet.toList        
+      } else {
+        val period: Period =
+          reportUnit match {
+            case ReportUnit.SixMin =>
+              6.minute
+            case ReportUnit.FifteenMin =>
+              15.minute
+            case ReportUnit.Hour =>
+              1.hour
+          }
 
-      val timeList = getPeriods(start, end, period)
+        getPeriods(start, end, period)
+      }
 
       val tabType = if (reportUnit == ReportUnit.Hour)
         TableType.hour

@@ -22,6 +22,8 @@ case class Monitor(_id: String, indParkName: String, dp_no: String,
       "lat" -> lat, "lng" -> lng, "autoAudit" -> autoAudit, "head" -> head, "tail" -> tail,
       "minHead" -> minHead, "minTail" -> minTail)
   }
+  
+  def fullName = s"$indParkName$dp_no"
 
   def getPlantID = {
     val ids = _id.split("#")

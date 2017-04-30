@@ -65,57 +65,20 @@ object Realtime extends Controller {
       import MonitorType._
       val user = request.user
       val userFuture = User.getUserByEmailFuture(user.id)
-      val latestRecordMap = Record.getLatestRecordMapFuture(Record.MinCollection)
+      val latestRecordMapFuture = Record.getLatestMtRecordMapFuture(Record.MinCollection)
 
       for {
         userOpt <- User.getUserByEmailFuture(user.id) if userOpt.isDefined
         groups <- Group.findGroup(userOpt.get.groupId)
-        map <- latestRecordMap
+        map <- latestRecordMapFuture
       } yield {
         if (groups.isEmpty)
-          Ok(views.html.realtimeStatus(Map.empty[Monitor.Value, (DateTime, Map[MonitorType.Value, Record])], Privilege.emptyPrivilege))
+          Ok(views.html.realtimeStatus(Map.empty[MonitorType.Value, (DateTime, Map[Monitor.Value, Record])], Privilege.emptyPrivilege))
         else {
           val group = groups(0)
           Ok(views.html.realtimeStatus(map, group.privilege))
         }
       }
-  }
-
-  case class WindInfo(windDir: Double, windSpeed: Double)
-  def getRealtimeMonitorStatusWeatherPair() = {
-    val recordMapFuture = Record.getLatestRecordMapFuture(Record.HourCollection)
-
-    for (recordMap <- recordMapFuture) yield {
-      val statusMap =
-        recordMap map {
-          pair =>
-            val monitor = pair._1
-            val mtRecordMap = pair._2._2
-            val mtStatusMap = mtRecordMap map {
-              p => p._1 -> p._2.status
-            }
-            monitor -> mtStatusMap
-        }
-
-      val weatherMap =
-        recordMap map {
-          pair =>
-            val monitor = pair._1
-            val mtRecordMap = pair._2._2
-            val windSpeed = if (mtRecordMap.contains(MonitorType.WIN_SPEED))
-              mtRecordMap(MonitorType.WIN_SPEED).value
-            else
-              0
-
-            val windDir = if (mtRecordMap.contains(MonitorType.WIN_DIRECTION))
-              mtRecordMap(MonitorType.WIN_DIRECTION).value
-            else
-              0
-            monitor -> WindInfo(windDir, windSpeed)
-        }
-      
-      (statusMap, weatherMap)
-    }
   }
 
   case class MonitorInfo(id: String, status: Int, winDir: Double, winSpeed: Double, statusStr: String)
@@ -124,55 +87,37 @@ object Realtime extends Controller {
   implicit val monitorInfoWrite = Json.writes[MonitorInfo]
   implicit val mapInfoWrite = Json.writes[RealtimeMapInfo]
 
-  def realtimeMap = Security.Authenticated.async {
+
+  def highchartJson(monitorTypeStr: String) = Security.Authenticated.async {
     implicit request =>
-      val statusWeatherPairFuture = getRealtimeMonitorStatusWeatherPair
+      val userOptF = User.getUserByEmailFuture(request.user.id)
       val myMonitorListFuture = Privilege.myMonitorList(request.user.id)
-
-      def getStatusIndex(statusMap: Map[MonitorType.Value, String]): (Int, String) = {
-        val statusBuilder = new StringBuilder
-
-        val statusIndexes = statusMap.map { mt_status =>
-          val status = mt_status._2
-          if (MonitorStatus.isValid(status))
-            0
-          else if (MonitorStatus.isCalbration(status)) {
-            statusBuilder.append(s"${MonitorType.map(mt_status._1).desp}:${MonitorStatus.map(status).desp}<br/>")
-            1
-          } else if (MonitorStatus.isMaintenance(status)) {
-            statusBuilder.append(s"${MonitorType.map(mt_status._1).desp}:${MonitorStatus.map(status).desp}<br/>")
-            2
-          } else {
-            statusBuilder.append(s"${MonitorType.map(mt_status._1).desp}:${MonitorStatus.map(status).desp}<br/>")
-            4
-          }
-        }
-
-        if (statusIndexes.size == 0)
-          (0, "")
-        else
-          (statusIndexes.max, statusBuilder.toString())
-      }
+      val mt = MonitorType.withName(monitorTypeStr)
 
       for {
-        statusWeatherPair <- statusWeatherPairFuture
-        myMonitorList <- myMonitorListFuture
-        statusMap = statusWeatherPair._1
-        weatherMap = statusWeatherPair._2
+        userOpt <- userOptF if userOpt.isDefined
+        groupF = Group.findGroup(userOpt.get.groupId)
+        groupSeq <- groupF
+        myMonitors <- myMonitorListFuture
+        latestDataTimeOpt <- Record.getLatestMonitorTypeRecordTimeFuture(Record.MinCollection, mt)
       } yield {
-        val mapInfos =
-          for {
-            m <- myMonitorList
-            weather = weatherMap.getOrElse(m, WindInfo(0, 0))
-            status = statusMap.getOrElse(m,  Map.empty[MonitorType.Value, String])
-          } yield {
-            val (statusIndex, statusStr) = getStatusIndex(status)
-            MonitorInfo(m.toString(), statusIndex, weather.windDir, weather.windSpeed, statusStr)
-          }
+        val group = groupSeq(0)
 
-        Ok(Json.toJson(RealtimeMapInfo(mapInfos)))
+        val latestRecordTime = latestDataTimeOpt.getOrElse(DateTime.now())
+
+        val reportUnit = if (mt == MonitorType.withName("OP"))
+          ReportUnit.SixMin
+        else if(mt == MonitorType.withName("FLOW") || mt == MonitorType.withName("TEMP"))
+          ReportUnit.Hour
+        else
+          ReportUnit.FifteenMin
+
+        import controllers.Query.trendHelper
+        val chart = trendHelper(myMonitors.toArray, Array(mt), TableType.min, reportUnit,
+          latestRecordTime - 1.day, latestRecordTime)(MonitorStatusFilter.ValidData)
+        Ok(Json.toJson(chart))
 
       }
-  }
 
+  }
 }
