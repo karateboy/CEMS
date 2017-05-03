@@ -99,11 +99,14 @@ object Realtime extends Controller {
         groupF = Group.findGroup(userOpt.get.groupId)
         groupSeq <- groupF
         myMonitors <- myMonitorListFuture
-        latestDataTimeOpt <- Record.getLatestMonitorTypeRecordTimeFuture(Record.MinCollection, mt)
+        latestDataTimeRecordOpt <- Record.getLatestMonitorTypeRecordFuture(Record.MinCollection, mt)
       } yield {
         val group = groupSeq(0)
 
-        val latestRecordTime = latestDataTimeOpt.getOrElse(DateTime.now())
+        val latestRecordTime = if(latestDataTimeRecordOpt.isDefined) 
+          latestDataTimeRecordOpt.get._2._1
+        else
+          DateTime.now()
 
         val reportUnit = if (mt == MonitorType.withName("OP"))
           ReportUnit.SixMin

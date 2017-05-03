@@ -311,7 +311,7 @@ object Record {
     }
   }
 
-    def getLatestRecordMapFuture(colName: String) = {
+  def getLatestRecordMapFuture(colName: String) = {
     import org.mongodb.scala.bson._
     import org.mongodb.scala.model.Filters._
     import org.mongodb.scala.model.Projections._
@@ -329,7 +329,7 @@ object Record {
         for {
           docs <- f
         } yield {
-          if (!docs.isEmpty){
+          if (!docs.isEmpty) {
             val doc = docs.head
             val time = doc("time").asDateTime().toDateTime()
             val pair =
@@ -344,17 +344,17 @@ object Record {
                 mt -> Record(m, time, v.asDouble().doubleValue(), s.asString().getValue)
               }
             Some(m -> (time, pair.toMap))
-          }else{
+          } else {
             None
           }
         }
       }
     for (optPairs <- Future.sequence(futureList)) yield {
-      val pairs = optPairs.flatMap(x=>x)
+      val pairs = optPairs.flatMap(x => x)
       pairs.toMap
     }
   }
-    
+
   def getLatestMtRecordMapFuture(colName: String) = {
     import org.mongodb.scala.bson._
     import org.mongodb.scala.model.Filters._
@@ -365,32 +365,12 @@ object Record {
 
     val mtList = MonitorType.activeMtvList
     val col = MongoDB.database.getCollection(colName)
-    val futureList =
-      for {
-        mt <- MonitorType.activeMtvList
-        mtLatestFuture = getLatestMonitorTypeRecordTimeFuture(colName, mt)
-      } yield {
-        for {
-          mtLatestOpt <- mtLatestFuture
-        } yield {
-          val entryOpt =
-            for (mtLatest <- mtLatestOpt) yield {
-              val f = getTimeRecordMapFuture(colName)(mt, mtLatest)
-              val map = waitReadyResult(f)
-              (mtLatest, map)
-            }
-
-          for (entry <- entryOpt) yield mt -> entry
-        }
-      }
-
-    for (optPairs <- Future.sequence(futureList)) yield {
-      val pairs = optPairs.flatMap(x => x)
-      pairs.toMap
-    }
+    Future.traverse(MonitorType.activeMtvList)({ mt =>
+      getLatestMonitorTypeRecordFuture(colName, mt)
+    }).map(x => x.flatMap(x => x)).map(_.toMap)
   }
 
-  def getLatestMonitorTypeRecordTimeFuture(colName: String, monitorType: MonitorType.Value) = {
+  def getLatestMonitorTypeRecordFuture(colName: String, mt: MonitorType.Value) = {
     import org.mongodb.scala.bson._
     import org.mongodb.scala.model._
     import org.mongodb.scala.model.Projections._
@@ -400,16 +380,29 @@ object Record {
 
     val mtList = MonitorType.activeMtvList
     val col = MongoDB.database.getCollection(colName)
-    val projFields = List("time")
+    val projFields = List("monitor", "time", MonitorType.BFName(mt))
     val proj = include(projFields: _*)
-    val f = col.find(Filters.ne(MonitorType.BFName(monitorType), null)).projection(proj).sort(descending("time")).limit(1).toFuture()
+    val f = col.find(Filters.ne(MonitorType.BFName(mt), null)).projection(proj).sort(descending("time")).limit(Monitor.mvList.length).toFuture()
     for {
       docs <- f
     } yield {
       if (!docs.isEmpty) {
         val doc = docs.head
-        val time = doc("time").asDateTime().toDateTime()
-        Some(time)
+        val latestTime = doc("time").asDateTime().toDateTime()
+        val pairs =
+          for {
+            doc <- docs.filter(doc => doc("time").asDateTime().toDateTime() == latestTime)
+            monitor = Monitor.withName(doc("monitor").asString().getValue)
+            mtBFName = MonitorType.BFName(mt)
+            mtDocOpt = doc.get(mtBFName) if mtDocOpt.isDefined && mtDocOpt.get.isDocument()
+            mtDoc = mtDocOpt.get.asDocument()
+            v = mtDoc.get("v") if v.isDouble()
+            s = mtDoc.get("s") if s.isString()
+          } yield {
+            monitor -> Record(monitor, latestTime, v.asDouble().doubleValue(), s.asString().getValue)
+          }
+        pairs.toMap
+        Some(mt->(latestTime, pairs.toMap))
       } else {
         None
       }
