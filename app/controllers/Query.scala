@@ -200,7 +200,7 @@ object Query extends Controller {
   }
 
   def trendHelper(monitors: Array[Monitor.Value], monitorTypes: Array[MonitorType.Value], tabType: TableType.Value,
-                  reportUnit: ReportUnit.Value, start: DateTime, end: DateTime)(statusFilter: MonitorStatusFilter.Value) = {
+                  reportUnit: ReportUnit.Value, start: DateTime, end: DateTime, chartType:String = "line")(statusFilter: MonitorStatusFilter.Value) = {
 
     val windMtv = MonitorType.WIN_DIRECTION
     val period: Period =

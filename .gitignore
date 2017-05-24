@@ -2,6 +2,7 @@
 bin/
 /db
 .eclipse
+.tempBin/
 /logs/
 /modules
 /project/project
